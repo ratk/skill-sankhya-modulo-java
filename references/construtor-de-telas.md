@@ -509,20 +509,134 @@ No XML, referenciar o JAR:
 
 ## Tabelas do Sistema mais Usadas em Relacionamentos
 
-| Entidade JAPE | Tabela | Descrição |
-|---|---|---|
-| `CabecalhoNota` | `TGFCAB` | Cabeçalho de notas/pedidos |
-| `ItemNota` | `TGFITE` | Itens de nota |
-| `Financeiro` | `TGFFIN` | Títulos financeiros |
-| `Parceiro` | `TGFPAR` | Parceiros (clientes/fornecedores) |
-| `Produto` | `TGFPRO` | Produtos |
-| `Empresa` | `TSIEMP` | Empresas |
-| `Volume` | `TGFVOL` | Unidades de medida |
-| `LocalFinanceiro` | `TGFLOC` | Locais/depósitos |
-| `Estoque` | `TGFEST` | Estoque |
-| `Veiculo` | `TGFVEI` | Veículos |
-| `OrdemCarga` | `TGFORD` | Ordens de carga |
-| `Contato` | `TGFCTT` | Contatos de parceiro |
-| `Endereco` | `TSIEND` | Endereços |
-| `Cidade` | `TSICID` | Cidades |
-| `Bairro` | `TSIBAI` | Bairros |
+| Entidade JAPE (`entityName`) | Tabela | Descrição | Confirmado |
+|---|---|---|---|
+| `CabecalhoNota` | `TGFCAB` | Cabeçalho de notas/pedidos | ✅ |
+| `ItemNota` | `TGFITE` | Itens de nota | — |
+| `Financeiro` | `TGFFIN` | Títulos financeiros | ✅ |
+| `Parceiro` | `TGFPAR` | Parceiros (clientes/fornecedores) | ✅ |
+| `Produto` / `Servico` | `TGFPRO` | Produtos e serviços | ✅ |
+| `Empresa` | `TSIEMP` | Empresas | — |
+| `Volume` | `TGFVOL` | Unidades de medida | — |
+| `LocalFinanceiro` | `TGFLOC` | Locais/depósitos | ✅ |
+| `Estoque` | `TGFEST` | Posição de estoque | — |
+| `Veiculo` | `TGFVEI` | Veículos | — |
+| `OrdemCarga` | `TGFORD` | Ordens de carga | ✅ |
+| `Contato` | `TGFCTT` | Contatos de parceiro | — |
+| `Endereco` | `TSIEND` | Endereços | — |
+| `Cidade` | `TSICID` | Cidades | — |
+| `Bairro` | `TSIBAI` | Bairros | — |
+| `ContratoArmazenagemGeral` | `TCSCON` | Contratos de armazenagem de grãos | ✅ |
+| `Usuario` | `TSIUSU` | Usuários do sistema | ✅ |
+| `LiberacaoLimite` | `TSILIB` | Liberações por alçada (TSILIB) | ✅ |
+
+> ✅ = confirmado em produção no projeto Blendcoffee.
+> Entidades sem confirmação podem variar entre versões/instâncias do Sankhya OM.
+
+---
+
+## Entidades Nativas — Atenção às Diferenças XML vs Java
+
+Alguns entityNames diferem entre o XML do Construtor de Telas e o uso em `JapeFactory.dao()`:
+
+| Tabela | XML (`entityName`) | Java (`JapeFactory.dao()`) | `DynamicEntityNames` |
+|---|---|---|---|
+| TSIUSU | `Usuario` | `"Usuarios"` | `USUARIO` |
+| TCSCON | `ContratoArmazenagemGeral` | `"ContratoArmazenagemGeral"` | `CONTRATO_ARMAZENAGEM` |
+
+> Sempre testar o entityName XML em ambiente de homologação antes de ir para produção.
+> Se o import falhar por entityName inválido, o Sankhya exibe erro explícito na tela de importação.
+
+---
+
+## Convenção de Arquivos no Projeto (Blendcoffee)
+
+### Nomenclatura dos ZIPs
+
+```
+Metadados_AD_NOMETABELA.zip          ← nova tabela customizada
+Metadados_TABELANATIVA_descricao.zip ← update em tabela nativa (isUpdate="true")
+```
+
+### Estrutura de pastas
+
+```
+Telas Adicionais/
+  armazens e benefiamento/    ← tabelas do módulo central de armazéns
+  contratoarmazenagem/        ← views e tabelas de contratos de armazenagem
+  ordemcoleta/                ← EPIC-5 (AD_ORDEMCOLETA, AD_ORDEMCOLITE)
+  adiantamentocontrato/       ← EPIC-4 (AD_TARDDI, update TCSCON)
+  saldospedexportacao/        ← saldos de exportação
+  [nomeepic]/                 ← criar pasta por EPIC/módulo
+```
+
+### Geração do ZIP via ferramentas
+
+O XML deve usar `encoding="ISO-8859-1"` no header. Para conteúdo apenas ASCII
+(sem acentos no CDATA) o encoding do arquivo em disco não importa — UTF-8 e
+ISO-8859-1 produzem bytes idênticos para caracteres ASCII.
+
+**Fluxo recomendado:**
+
+1. Criar `metadata.xml` com a ferramenta Write no caminho `/tmp/`
+2. Zipar com bash e salvar direto na pasta do projeto:
+
+```bash
+# Criar o zip com o arquivo renomeado para metadata.xml dentro
+cp /tmp/metadata_minhaentidade.xml /tmp/metadata.xml
+zip -j "Telas Adicionais/nomemodulo/Metadados_AD_MINHAENTIDADE.zip" /tmp/metadata.xml
+rm /tmp/metadata.xml
+```
+
+3. Verificar conteúdo:
+```bash
+unzip -p "Telas Adicionais/nomemodulo/Metadados_AD_MINHAENTIDADE.zip" metadata.xml | head -10
+ls -lh "Telas Adicionais/nomemodulo/"
+```
+
+### Adicionando campos a tabela nativa (`isUpdate="true"`)
+
+```xml
+<instance name="TCSCON" isUpdate="true">
+  <tableInfo name="TCSCON" sequenceType="M">
+    <primaryKey>
+      <NUMCONTRATO />
+    </primaryKey>
+  </tableInfo>
+  <fields>
+    <field name="AD_MEUCAMPO" systemField="N" dataType="I" presentationType="P"
+           calculated="N" allowSearch="N" allowDefault="S" visibleOnSearch="N" allowNull="S" size="10">
+      <description><![CDATA[Meu Campo Adicional]]></description>
+      <properties>
+        <prop name="nullable"><![CDATA[S]]></prop>
+        <prop name="visivel"><![CDATA[S]]></prop>
+        <prop name="UIGroupName"><![CDATA[Nome do Grupo na Tela]]></prop>
+        <prop name="readOnly"><![CDATA[N]]></prop>
+        <prop name="requerido"><![CDATA[N]]></prop>
+        <prop name="combobox"><![CDATA[N]]></prop>
+      </properties>
+    </field>
+  </fields>
+</instance>
+```
+
+> Se o import com `isUpdate="true"` falhar, os campos podem ser adicionados manualmente
+> via **Configurações > Campos Adicionais da Entidade** informando o entityName correto.
+
+### Criando aba adicional em tabela nativa (ex: aba em TCSCON)
+
+Padrão: criar tabela `AD_*` com `<reference>` apontando para a tabela nativa.
+O Sankhya detecta o `<reference>` e cria a aba automaticamente na tela pai.
+
+```xml
+<references>
+  <reference entityName="ContratoArmazenagemGeral" tableName="TCSCON"
+             type="I" insert="N" update="N" remove="S">
+    <fields>
+      <field name="NUMCONTRATO" systemField="S" localName="NUMCONTRATO" />
+    </fields>
+  </reference>
+</references>
+```
+
+> `remove="S"` → cascade delete: ao excluir o contrato, exclui os registros filhos.

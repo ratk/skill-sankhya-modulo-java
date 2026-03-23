@@ -32,7 +32,14 @@ JapeFactory.dao(DynamicEntityNames.FINANCEIRO).findByPK(nuFin);
 | `PARCEIRO` | `Parceiro` | `TGFPAR` | Parceiros (clientes/fornecedores/motoristas) |
 | `PRODUTO` | `Produto` | `TGFPRO` | Produtos |
 | `EMPRESA` | `Empresa` | `TSIEMP` | Empresas |
-| `USUARIO` | `Usuarios` | `TGFUSU` | Usuários do sistema |
+| `USUARIO` | `Usuarios` | `TSIUSU` | Usuários do sistema |
+| `CONTRATO_ARMAZENAGEM` | `ContratoArmazenagemGeral` | `TCSCON` | Contratos de armazenagem de grãos |
+| `LIBERACAO_LIMITE` | `LiberacaoLimite` | `TSILIB` | Liberações por alçada |
+| `LIMITE_LIBERACAO` | `LimiteLiberacao` | `TSLIM` | Limites por usuário/evento |
+
+> **TSIUSU vs TGFUSU:** Em versões modernas do Sankhya OM a tabela de usuários é `TSIUSU`, onde `TGFUSU` não existe.
+> O entityName XML é `"Usuario"` (singular). Em `JapeFactory.dao()` usa-se a string `"Usuario"` (singular).
+> O `DynamicEntityNames.USUARIO` aponta para a entidade/instância `Usuario`.
 
 ### Estoque e Logística
 
