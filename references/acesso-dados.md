@@ -260,6 +260,47 @@ jdbc.executeUpdate(
 - **Fora de evento**: `EntityFacadeFactory.getDWFFacade().getJdbcWrapper()`
 - **ResultSet**: sempre fechar com `finally`
 
+### Query Cross-Database (SQL Server / Oracle) com Fallback
+
+Para queries em catálogos do sistema (metadados, colunas, tabelas), SQL Server e Oracle
+usam views diferentes. Usar try-catch para tentar SQL Server primeiro:
+
+```java
+private static ResultSet executarQueryCrossDb(JdbcWrapper jdbc) throws Exception {
+    // Tentativa 1 — SQL Server / H2 (INFORMATION_SCHEMA)
+    String sqlSqlServer =
+        "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, " +
+        "       COALESCE(CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, 0) AS TAMANHO " +
+        "FROM INFORMATION_SCHEMA.COLUMNS " +
+        "WHERE COLUMN_NAME LIKE 'AD!_%' ESCAPE '!' " +
+        "ORDER BY TABLE_NAME, COLUMN_NAME";
+
+    // Tentativa 2 — Oracle (USER_TAB_COLUMNS = schema atual)
+    // Para outro schema: ALL_TAB_COLUMNS WHERE OWNER = 'SANKHYA'
+    String sqlOracle =
+        "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, " +
+        "       CASE WHEN DATA_TYPE IN ('VARCHAR2','CHAR','NVARCHAR2','NCHAR') " +
+        "            THEN CHAR_LENGTH ELSE 0 END AS TAMANHO " +
+        "FROM USER_TAB_COLUMNS " +
+        "WHERE COLUMN_NAME LIKE 'AD!_%' ESCAPE '!' " +
+        "ORDER BY TABLE_NAME, COLUMN_NAME";
+
+    try {
+        return jdbc.executeQuery(sqlSqlServer, new Object[0]);
+    } catch (Exception e1) {
+        try {
+            return jdbc.executeQuery(sqlOracle, new Object[0]);
+        } catch (Exception e2) {
+            throw MGEModelException.prettyMsg(
+                "Metadados indisponíveis. Verifique SQL Server/Oracle.", e2);
+        }
+    }
+}
+```
+
+> **ESCAPE '!'** — trata o `_` como literal (não wildcard) no LIKE.
+> `'AD!_%' ESCAPE '!'` casa exatamente com colunas que começam com `AD_`.
+
 ---
 
 ## JapeSession — Quando e Como Usar

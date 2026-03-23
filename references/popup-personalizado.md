@@ -27,19 +27,36 @@ Exemplos: confirmar ação antes de gerar nota, perguntar se deve imprimir após
 ## Estrutura de Arquivos
 
 ```
-src/
-├── main/
-│   ├── java/
-│   │   └── utils/
-│   │       └── PopUpBuilder.java          ← Builder (já existe no modelo)
-│   └── resources/
-│       └── popup/
-│           ├── PopUpConfirmacao.html       ← HTML do popup
-│           ├── PopUpConfirmacao.js         ← JavaScript do popup
-│           ├── PopUpSelecao.html
-│           ├── PopUpSelecao.js
-│           └── ...
+Java/src/br/com/sankhya/dstech/
+└── utils/
+    └── PopUpBuilder.java               ← Builder CUSTOMIZADO — criar manualmente (ver examples/PopUpBuilder.java)
+
+Java/resources/br/com/sankhya/dstech/
+└── {modulo}/
+    └── popup/
+        ├── PopUpConfirmacao.html        ← HTML do popup
+        ├── PopUpConfirmacao.js          ← JavaScript do popup
+        ├── PopUpSelecao.html
+        ├── PopUpSelecao.js
+        └── ...
 ```
+
+> **ATENÇÃO — PopUpBuilder NÃO é nativo do Sankhya SDK.**
+> É uma classe customizada que deve ser criada em `br.com.sankhya.dstech.utils.PopUpBuilder`.
+> A implementação completa está em `examples/PopUpBuilder.java`.
+>
+> **Pacote correto:** `br.com.sankhya.dstech.utils` (NÃO `utils.PopUpBuilder`)
+>
+> **Import correto nos seus artefatos:**
+> ```java
+> import br.com.sankhya.dstech.utils.PopUpBuilder;
+> import br.com.sankhya.dstech.utils.MessageUtils;
+> ```
+>
+> **Por que resources em `br/com/sankhya/dstech/{modulo}/popup/`?**
+> O `build.gradle` do projeto usa `include "br/com/sankhya/dstech/${moduleName}/**"` no JAR task.
+> Colocar os resources neste caminho garante que sejam incluídos sem alterar o build.gradle.
+> Acesse via: `getClass().getResourceAsStream("/br/com/sankhya/dstech/{modulo}/popup/PopUp.html")`
 
 **Convenção:** Nome do arquivo começa com `PopUp` + finalidade (ex: `PopUpConfirmacao.html`)
 
@@ -47,22 +64,32 @@ src/
 
 ## PopUpBuilder API
 
-### Classe: `utils.PopUpBuilder.Builder`
+### Classe: `br.com.sankhya.dstech.utils.PopUpBuilder.Builder`
+
+> Implementação completa em `examples/PopUpBuilder.java` — copiar para `br.com.sankhya.dstech.utils.PopUpBuilder`.
 
 ```java
-import utils.PopUpBuilder;
-import utils.MessageUtils;
+import br.com.sankhya.dstech.utils.PopUpBuilder;
+import br.com.sankhya.dstech.utils.MessageUtils;
+
+// Path do resource: absoluto a partir do classpath
+// Colocar em Java/resources/br/com/sankhya/dstech/{modulo}/popup/
+// para que o build.gradle inclua no JAR sem alterações.
 
 String popup = new PopUpBuilder.Builder()
     .setTitle("Título do Popup")                          // Obrigatório
-    .setHtmlFile(getClass().getResourceAsStream("/popup/MeuPopUp.html"))  // Obrigatório
-    .setJsFile(getClass().getResourceAsStream("/popup/MeuPopUp.js"))       // Obrigatório
+    .setHtmlFile(MinhaClasse.class.getResourceAsStream(
+        "/br/com/sankhya/dstech/{modulo}/popup/MeuPopUp.html"))  // Obrigatório
+    .setJsFile(MinhaClasse.class.getResourceAsStream(
+        "/br/com/sankhya/dstech/{modulo}/popup/MeuPopUp.js"))    // Obrigatório
     .setWidth(800)                                         // Opcional, padrão: 800
     .setHeight(400)                                        // Opcional, padrão: 400
-    .setCssFile(getClass().getResourceAsStream("/popup/MeuPopUp.css"))   // Opcional
+    .setCssFile(MinhaClasse.class.getResourceAsStream(
+        "/br/com/sankhya/dstech/{modulo}/popup/MeuPopUp.css"))   // Opcional
     .addVariable("codProj", codProj)                      // Passa variável Java para JS
-    .addVariable("nome", "texto")                         // String é inserida com aspas
-    .addVariable("ativo", true)                           // Boolean/Number sem aspas
+    .addVariable("nome", "texto")                         // String → var nome = 'texto';
+    .addVariable("ativo", true)                           // Boolean/Number → var ativo = true;
+    .addVariable("jsonStr", jsonString)                   // JSON String → var x = '[{...}]';
     .build();
 
 MessageUtils.showInfo(popup);
@@ -172,7 +199,7 @@ Containers de layout:
 
 ## Templates de Assets
 
-Os 4 tipos de popup têm templates prontos para copiar em `assets/popup/`. Usar como ponto de partida e adaptar entidade, campos e serviço:
+Os tipos de popup têm templates prontos para copiar em `assets/popup/`. Usar como ponto de partida e adaptar entidade, campos e serviço:
 
 | Tipo | HTML | JS |
 |---|---|---|
@@ -180,6 +207,7 @@ Os 4 tipos de popup têm templates prontos para copiar em `assets/popup/`. Usar 
 | Seleção em Grid | `assets/popup/PopUpSelecao.html` | `assets/popup/PopUpSelecao.js` |
 | Formulário | `assets/popup/PopUpFormulario.html` | `assets/popup/PopUpFormulario.js` |
 | Exibição de Dados | `assets/popup/PopUpDetalhes.html` | `assets/popup/PopUpDetalhes.js` |
+| **Wizard 2 Páginas** | — (construir inline) | ver padrão abaixo |
 
 ---
 
@@ -389,30 +417,165 @@ ServiceProxy.callService('modulo@ServicoSP.acao', {params: params}, {})
 ## Estrutura de Diretórios Recomendada
 
 ```
-src/main/
-├── java/
-│   └── br/com/sankhya/dstech/modulo/
+Java/
+├── src/br/com/sankhya/dstech/
+│   ├── utils/
+│   │   └── PopUpBuilder.java              ← OBRIGATÓRIO — copiar de examples/PopUpBuilder.java
+│   └── {modulo}/
 │       ├── botaoacao/
-│       │   └── MeuBotaoAcao.java        ← Chama PopUpHelper
+│       │   └── MeuBotaoAcao.java          ← Chama PopUpBuilder diretamente ou via helper
 │       └── helper/
-│           └── PopUpHelper.java         ← Encapsula PopUpBuilder
-└── resources/
-    └── popup/
-        ├── PopUpConfirmacao.html
-        ├── PopUpConfirmacao.js
-        ├── PopUpSelecao.html
-        ├── PopUpSelecao.js
-        ├── PopUpFormulario.html
-        ├── PopUpFormulario.js
-        ├── PopUpDetalhes.html
-        └── PopUpDetalhes.js
+│           └── PopUpHelper.java           ← Opcional — encapsula PopUpBuilder
+└── resources/br/com/sankhya/dstech/
+    └── {modulo}/
+        └── popup/
+            ├── PopUpNome.html             ← Path capturado pelo build.gradle sem alterações
+            └── PopUpNome.js
 ```
+
+---
+
+## 5. Popup Wizard (Multi-Etapas / State Machine)
+
+**Cenário:** Fluxo em etapas dentro de um único popup — ex: selecionar uma entidade
+na etapa 1 e configurar opções na etapa 2.
+
+**Vantagem sobre dois popups sequenciais:** Sem problema de timing; estado mantido
+no scope Angular entre as páginas sem chamadas adicionais ao servidor.
+
+### HTML (duas divs com ng-show)
+
+```html
+<div ng-show="pagina === 1">
+    <!-- etapa 1 -->
+    <input type="text" ng-model="filtro" placeholder="Filtrar..."/>
+    <table class="table table-hover">
+        <tbody>
+            <tr ng-repeat="item in itensFiltrados()"
+                ng-click="selecionarItem(item)"
+                ng-dblclick="irParaPagina2()"
+                ng-class="{'info': itemSelecionado && itemSelecionado.id === item.id}">
+                <td>{{item.nome}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <button class="btn" ng-click="$dismiss()" danger>Cancelar</button>
+    <button class="btn" ng-click="irParaPagina2()" ng-disabled="!itemSelecionado" brand>Próximo ></button>
+</div>
+
+<div ng-show="pagina === 2">
+    <!-- etapa 2 -->
+    <h4>{{itemSelecionado.nome}}</h4>
+    <!-- conteúdo da etapa 2 -->
+    <button class="btn" ng-click="voltar()">< Voltar</button>
+    <button class="btn" ng-click="$dismiss()" danger>Cancelar</button>
+    <button class="btn" ng-click="confirmar()" brand>Confirmar</button>
+</div>
+```
+
+### JS (state machine)
+
+```javascript
+// Variável injetada pelo Java: var itensJson = '[{...}]';
+var itens = JSON.parse(itensJson);
+
+scope.pagina = 1;
+scope.itens  = itens;
+scope.itemSelecionado = null;
+scope.filtro = '';
+
+scope.itensFiltrados  = itensFiltrados;
+scope.selecionarItem  = selecionarItem;
+scope.irParaPagina2   = irParaPagina2;
+scope.voltar          = voltar;
+scope.confirmar       = confirmar;
+
+function itensFiltrados() {
+    var f = (scope.filtro || '').toUpperCase();
+    if (!f) return scope.itens;
+    return scope.itens.filter(function(i) { return i.nome.toUpperCase().indexOf(f) !== -1; });
+}
+
+function selecionarItem(item)  { scope.itemSelecionado = item; }
+function irParaPagina2() {
+    if (!scope.itemSelecionado) {
+        MessageUtils.showAlert(MessageUtils.TITLE_WARNING, 'Selecione um item!');
+        return;
+    }
+    scope.pagina = 2;
+}
+function voltar() { scope.pagina = 1; }
+function confirmar() { /* lógica final */ scope.$dismiss(); }
+```
+
+### Java (pre-carrega dados e injeta como JSON)
+
+```java
+// Serializar lista para JSON antes de abrir o popup
+String itensJson = MinhaHelper.buscarItensJson();  // retorna "[{\"id\":1,\"nome\":\"...\"}]"
+
+String popup = new PopUpBuilder.Builder()
+    .setTitle("Selecionar Item")
+    .setHtmlFile(MinhaClasse.class.getResourceAsStream("/br/.../popup/PopUpWizard.html"))
+    .setJsFile(MinhaClasse.class.getResourceAsStream("/br/.../popup/PopUpWizard.js"))
+    .setWidth(750).setHeight(500)
+    .addVariable("itensJson", itensJson)   // String → var itensJson = '[{...}]';
+    .build();
+
+MessageUtils.showInfo(popup);
+```
+
+> **Quando pre-carregar vs. chamar serviço em runtime:**
+> Pre-carregue tudo no `doAction` quando o volume for razoável (< ~200 registros).
+> Para volumes grandes, use `ServiceProxy` no JS para carregar on-demand — mas isso
+> requer um endpoint de backend acessível.
+
+---
+
+## 6. Download de Arquivo Client-Side (Blob URL)
+
+**Cenário:** Gerar e baixar um arquivo (XML, CSV, JSON, TXT) a partir do conteúdo
+construído no JavaScript, sem precisar de um endpoint de backend.
+
+```javascript
+function baixarArquivo(conteudo, nomeArquivo, tipoMime) {
+    try {
+        var blob = new Blob([conteudo], { type: tipoMime + ';charset=utf-8;' });
+        var url  = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', nomeArquivo);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1500);
+    } catch (e) {
+        MessageUtils.showAlert(MessageUtils.TITLE_ERROR, 'Erro ao gerar arquivo: ' + e.message);
+    }
+}
+
+// Exemplo — gerar XML e fechar popup
+function gerarXml() {
+    var xml = construirXml();   // string com o XML completo
+    baixarArquivo(xml, 'metadata.xml', 'application/xml');
+    scope.$dismiss();
+    MessageUtils.showInfo(MessageUtils.TITLE_INFORMATION, 'Arquivo gerado com sucesso!');
+}
+```
+
+**Tipos MIME comuns:**
+- XML:  `application/xml`
+- CSV:  `text/csv`
+- JSON: `application/json`
+- TXT:  `text/plain`
 
 ---
 
 ## Checklist
 
-- [ ] HTML e JS em `src/main/resources/popup/`
+- [ ] `PopUpBuilder.java` existe em `br.com.sankhya.dstech.utils` (copiar de `examples/PopUpBuilder.java`)
+- [ ] HTML e JS em `Java/resources/br/com/sankhya/dstech/{modulo}/popup/`
+- [ ] `getResourceAsStream` usa path absoluto: `/br/com/sankhya/dstech/{modulo}/popup/...`
 - [ ] Nome de arquivo segue convenção `PopUp[Nome].html`
 - [ ] Variáveis passadas via `addVariable()` documentadas
 - [ ] `MessageUtils` para feedback ao usuário
@@ -420,3 +583,4 @@ src/main/
 - [ ] Tratamento de erro em `ServiceProxy.callService()`
 - [ ] `CriteriaProvider` para filtros de dataset
 - [ ] Tamanho adequado ao conteúdo
+- [ ] Wizard: usar `ng-show="pagina === N"` (não `ng-if`, para não destruir o DOM)
