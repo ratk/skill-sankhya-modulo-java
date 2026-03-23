@@ -4,17 +4,23 @@
 
 O `PopUpBuilder` permite criar popups personalizados ricos em Módulos Java Sankhya, injetando HTML e JavaScript que rodam no contexto Angular do Sankhya OM.
 
-**Quando usar:**
-- Confirmações complexas (mais que Sim/Não simples)
-- Seleção de registros em Grid
-- Formulários de entrada de dados
-- Exibição de dados detalhados
-- Interações que exigem interface rica indisponível no nativo
+**Quando usar — dois cenários principais:**
+
+**1. Botão de ação com seleção de registros (`AcaoRotinaJava`)**
+Os parâmetros nativos (`ctx.getParam()`) suportam apenas inputs simples: texto, data, decimal.
+Quando o usuário precisa escolher de uma lista ou grid de registros, PopUpBuilder é a única alternativa.
+Exemplos: selecionar tipo de operação, escolher produto de uma lista filtrada, marcar campos para exportação.
+
+**2. Eventos e Regras de Negócio com confirmação/pergunta (`EventoProgramavelJava`, `RegraNegocioJava`)**
+`ctx.confirmarSimNao()` existe apenas em `AcaoRotinaJava` — não está disponível em eventos nem em regras.
+PopUpBuilder via `MessageUtils.showInfo()` é a forma de apresentar uma pergunta, pedir confirmação
+ou coletar uma escolha do usuário dentro desses fluxos.
+Exemplos: confirmar ação antes de gerar nota, perguntar se deve imprimir após evento, escolher destino de roteamento.
 
 **Quando NÃO usar:**
-- Confirmações simples (usar `MessageUtils.showAlert()`)
-- Mensagens de informação (usar `MessageUtils.showInfo()`)
-- Erros simples (usar `MGEModelException.throwMe()`)
+- Confirmação simples em botão de ação → usar `ctx.confirmarSimNao()`
+- Mensagem de erro → usar `MGEModelException`
+- Mensagem informativa pós-operação → usar `MessageUtils.showInfo()` direto (sem popup HTML)
 
 ---
 
@@ -308,18 +314,30 @@ public class MeuBotaoAcao implements AcaoRotinaJava {
 }
 ```
 
-### Em Evento (EventoProgramavelJava)
+### Em Evento (EventoProgramavelJava) e Regra de Negócio (RegraNegocioJava)
 
-**Limitação:** Eventos não podem exibir popups interativos porque rodam no servidor.
+`ctx.confirmarSimNao()` não existe nesses artefatos — PopUpBuilder é a forma de fazer perguntas ou coletar confirmação do usuário durante o fluxo.
 
 ```java
-// O popup em eventos NÃO FUNCIONA para interação com usuário
-// use apenas para mensagens informativas após commit
-public void afterInsert(PersistenceEvent event) throws Exception {
-    // Considere usar MessageUtils.showInfo() ou MGEModelException
-    // Popups interativos não são adequados em eventos
+// beforeUpdate de uma RegraNegocioJava: pergunta antes de prosseguir
+public void executa(DynamicVO vo, DynamicVO voAnt) throws Exception {
+
+    String popup = new PopUpBuilder.Builder()
+        .setTitle("Confirmação de Roteamento")
+        .setHtmlFile(getClass().getResourceAsStream("/popup/PopUpConfirmacao.html"))
+        .setJsFile(getClass().getResourceAsStream("/popup/PopUpConfirmacao.js"))
+        .setWidth(400)
+        .setHeight(200)
+        .addVariable("mensagem", "Deseja gerar a nota de devolução automaticamente?")
+        .addVariable("detalhe", "A operação criará um novo documento vinculado.")
+        .build();
+
+    MessageUtils.showInfo(popup);
+    // O processamento continua no callback do JavaScript via ServiceProxy
 }
 ```
+
+**Padrão recomendado para eventos/regras:** o popup coleta a decisão do usuário e chama um `ServiceProxy` com a escolha. O Java da resposta executa a lógica correspondente. Não há retorno síncrono do popup para o método Java — o fluxo é sempre assíncrono via callback JavaScript.
 
 ---
 

@@ -66,7 +66,11 @@ br.com.sankhya.dstech.
 
 > **NUNCA** usar anotações `@ActionButton`, `@Listener`, `@Job`, `@Service`, `@BusinessRule`.
 > **NUNCA** sugerir sankhya-js, Design System, xhtml5 ou qualquer artefato de frontend nativo do Addon Studio.
-> **ÚNICA exceção de UI:** PopUpBuilder — HTML/JS injetado via `MessageUtils.showInfo()`. Usar somente quando `ctx.confirmarSimNao()` for insuficiente.
+>
+> **Exceção de UI — PopUpBuilder** (HTML/JS injetado via `MessageUtils.showInfo()`). Usar nos dois cenários abaixo:
+>
+> 1. **Botão de ação + seleção de registros:** parâmetros nativos (`ctx.getParam()`) só suportam inputs simples (texto, data, decimal). Quando o usuário precisa escolher de uma lista ou grid de registros, PopUpBuilder é a única alternativa.
+> 2. **Eventos e Regras de Negócio + confirmação/pergunta:** `ctx.confirmarSimNao()` existe apenas em `AcaoRotinaJava`. Em `EventoProgramavelJava` e `RegraNegocioJava`, PopUpBuilder via `MessageUtils.showInfo()` é a forma de apresentar uma pergunta ou coletar uma escolha do usuário durante o fluxo.
 
 ---
 
