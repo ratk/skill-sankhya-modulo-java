@@ -58,7 +58,7 @@ br.com.sankhya.dstech.
 | **Botões de ação** | `AcaoRotinaJava` (manual) | `@ActionButton` (automático) |
 | **Jobs agendados** | `ScheduledAction` org.cuckoo.core | `@Job` (automático) |
 | **Regras de negócio** | `RegraNegocioJava` / `Regra` (manual) | `@BusinessRule` (automático) |
-| **Frontend** | **Indisponível** — nenhuma alteração de UI possível | `vc/` com xhtml5, SankhyaJS, Design System |
+| **Frontend** | **Popups via PopUpBuilder** — HTML/JS injetado, grids, formulários | `vc/` com xhtml5, SankhyaJS, Design System |
 | **Telas/Tabelas** | XML Construtor de Telas (importação manual) | `datadictionary/` (deploy automático) |
 | **Build** | Gradle → JAR → importação manual | Gradle → deploy automático pelo Studio |
 | **Prefixo de tabelas** | `AD_` (convencional) | Prefixo do addon (nunca `AD_`) |
@@ -103,6 +103,7 @@ entidade alvo, tipo de evento, campos envolvidos, regra de negócio esperada.
 | **Helper estático** | — | Lógica reutilizável entre artefatos; métodos estáticos, construtor privado |
 | **Enum** | — | Estados, tipos e valores fixos — substituir strings mágicas |
 | **XML Construtor de Telas** | — | Criar/atualizar tabela e tela; empacotar JAR no ZIP de metadados |
+| **PopUpBuilder** | — | Popup personalizado para interação rica: confirmação complexa, seleção em grid, formulário de dados |
 
 ---
 
@@ -176,6 +177,7 @@ Templates Java prontos para copiar e adaptar em `examples/`:
 - **`examples/Modelo_RegraNegocio.java`** — RegraNegocioJava completo: sucesso/msgError, isItem/ehConfirmacao, liberação de limite
 - **`examples/Modelo_RegraPreferencia.java`** — Interface Regra via preferência MODREGCENTRAL
 - **`examples/Modelo_Helper.java`** — Helper estático com exemplos de DwfUtils, JapeFactory, helpers dstech e execWithTx
+- **`examples/Modelo_PopUpHelper.java`** — Helper para popups personalizados com PopUpBuilder
 
 ---
 
@@ -194,3 +196,4 @@ Carregar o arquivo correspondente ao aprofundar um tópico:
 | Helpers prontos — CabecalhoNotaHelper, ParceiroHelper, LancarTelaHelper, DwfUtils, etc. | `references/helpers-dstech.md` |
 | Boas práticas — erros, logging, transações, performance, design de helpers | `references/boas-praticas.md` |
 | Entidades nativas — DynamicEntityNames, campos TGFCAB/TGFITE/TGFFIN/TGFUSU | `references/entidades-sistema.md` |
+| Popups personalizados — PopUpBuilder, HTML/JS, Angular, ServiceProxy | `references/popup-personalizado.md` |
