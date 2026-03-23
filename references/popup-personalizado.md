@@ -164,13 +164,25 @@ Containers de layout:
 
 ---
 
+## Templates de Assets
+
+Os 4 tipos de popup têm templates prontos para copiar em `assets/popup/`. Usar como ponto de partida e adaptar entidade, campos e serviço:
+
+| Tipo | HTML | JS |
+|---|---|---|
+| Confirmação | `assets/popup/PopUpConfirmacao.html` | `assets/popup/PopUpConfirmacao.js` |
+| Seleção em Grid | `assets/popup/PopUpSelecao.html` | `assets/popup/PopUpSelecao.js` |
+| Formulário | `assets/popup/PopUpFormulario.html` | `assets/popup/PopUpFormulario.js` |
+| Exibição de Dados | `assets/popup/PopUpDetalhes.html` | `assets/popup/PopUpDetalhes.js` |
+
+---
+
 ## Tipos de Popup
 
 ### 1. Popup de Confirmação Sim/Não
 
 **Cenário:** Confirmar ação com mensagem detalhada antes de executar.
-
-**Java:**
+**Template:** `assets/popup/PopUpConfirmacao.html` + `PopUpConfirmacao.js`
 
 ```java
 public void confirmarAcao(BigDecimal idRegistro) throws Exception {
@@ -178,57 +190,14 @@ public void confirmarAcao(BigDecimal idRegistro) throws Exception {
         .setTitle("Confirmação de Exclusão")
         .setHtmlFile(getClass().getResourceAsStream("/popup/PopUpConfirmacao.html"))
         .setJsFile(getClass().getResourceAsStream("/popup/PopUpConfirmacao.js"))
+        .setWidth(400)
         .setHeight(200)
         .addVariable("idRegistro", idRegistro)
+        .addVariable("mensagem", "Deseja realmente excluir este registro?")
+        .addVariable("detalhe", "Esta ação não pode ser desfeita.")
         .build();
-    
+
     MessageUtils.showInfo(popup);
-}
-```
-
-**HTML (`/popup/PopUpConfirmacao.html`):**
-
-```html
-<sk-vbox gap="16" style="padding: 16px">
-    <div style="text-align: center">
-        <sk-icon font-icon="warning" style="font-size: 48px; color: #f39c12"></sk-icon>
-        <h3 style="margin-top: 16px">Deseja realmente excluir este registro?</h3>
-        <p style="color: #666">Esta ação não pode ser desfeita.</p>
-    </div>
-    
-    <div sk-display="flex" style="justify-content: center; gap: 16px">
-        <button class="btn" ng-click="confirmar()" brand>
-            <sk-hbox gap="8" style="align-items: center">
-                <sk-icon font-icon="check"></sk-icon>
-                <span>Sim, excluir</span>
-            </sk-hbox>
-        </button>
-        <button class="btn" ng-click="$dismiss()" danger>
-            <sk-hbox gap="8" style="align-items: center">
-                <sk-icon font-icon="times"></sk-icon>
-                <span>Cancelar</span>
-            </sk-hbox>
-        </button>
-    </div>
-</sk-vbox>
-```
-
-**JavaScript (`/popup/PopUpConfirmacao.js`):**
-
-```javascript
-scope.confirmar = confirmar;
-
-function confirmar() {
-    ServiceProxy.callService('meumodulo@MeuServicoSP.excluir', {
-        params: { P_ID: idRegistro }
-    }, {}).then(response => {
-        if (response.responseBody.success) {
-            MessageUtils.showInfo(MessageUtils.TITLE_INFORMATION, "Registro excluído!");
-        } else {
-            MessageUtils.showAlert(MessageUtils.TITLE_ERROR, response.responseBody.message);
-        }
-        scope.$dismiss();
-    });
 }
 ```
 
@@ -237,8 +206,7 @@ function confirmar() {
 ### 2. Popup de Seleção em Grid
 
 **Cenário:** Usuário precisa selecionar um registro (Tipo de Operação, Parceiro, Produto) antes de prosseguir.
-
-**Java:**
+**Template:** `assets/popup/PopUpSelecao.html` + `PopUpSelecao.js`
 
 ```java
 public void selecionarTipoOperacao(BigDecimal nuNota, String tipoMov) throws Exception {
@@ -251,50 +219,14 @@ public void selecionarTipoOperacao(BigDecimal nuNota, String tipoMov) throws Exc
         .addVariable("nuNota", nuNota)
         .addVariable("tipoMov", tipoMov)
         .build();
-    
+
     MessageUtils.showInfo(popup);
 }
 ```
 
-**HTML (`/popup/PopUpSelecao.html`):**
-
-```html
-<sk-dataset entity-name="DhViewTopTipCont" sk-dataset-created="onDatasetCreated(dataset)">
-    <sk-field pattern="CODTIPOPER,DESCROPER,ORIGEM"></sk-field>
-</sk-dataset>
-
-<sk-vbox gap="8" style="padding: 8px">
-    <sk-vbox flex style="height: 280px">
-        <sk-datagrid
-            sk-dataset="dataset"
-            sk-allow-multiple-selection="false"
-            sk-editable="false"
-            sk-on-dbl-click="selecionar()">
-            <sk-datagrid-custom-column sk-field-name="CODTIPOPER" width="100"/>
-            <sk-datagrid-custom-column sk-field-name="DESCROPER" width="300"/>
-            <sk-datagrid-custom-column sk-field-name="ORIGEM" width="80"/>
-        </sk-datagrid>
-    </sk-vbox>
-    
-    <div sk-display="flex" style="justify-content: center; gap: 16px">
-        <button class="btn" ng-click="selecionar()" brand>
-            <sk-hbox gap="8" style="align-items: center">
-                <sk-icon font-icon="check"></sk-icon>
-                <span>Selecionar</span>
-            </sk-hbox>
-        </button>
-        <button class="btn" ng-click="$dismiss()" danger>Cancelar</button>
-    </div>
-</sk-vbox>
-```
-
-**JavaScript (`/popup/PopUpSelecao.js`):**
+No JS (`PopUpSelecao.js`), aplicar filtro no `onDatasetCreated` conforme a variável recebida:
 
 ```javascript
-scope.selecionar = selecionar;
-scope.onDatasetCreated = onDatasetCreated;
-scope.dataset;
-
 function onDatasetCreated(dataset) {
     scope.dataset = dataset;
     if (tipoMov === 'R') {
@@ -304,27 +236,6 @@ function onDatasetCreated(dataset) {
     }
     dataset.initAndRefresh();
 }
-
-function selecionar() {
-    if (scope.dataset.isEmpty()) {
-        MessageUtils.showAlert(MessageUtils.TITLE_WARNING, "Selecione um registro!");
-        return;
-    }
-    
-    var topSelecionada = scope.dataset.getCurrentRowAsObject().CODTIPOPER;
-    
-    ServiceProxy.callService('meuModulo@MeuServicoSP.processar', {
-        params: {
-            P_NUNOTA: nuNota,
-            P_CODTIPOPER: topSelecionada
-        }
-    }, {}).then(response => {
-        if (response.responseBody.success) {
-            MessageUtils.showInfo(MessageUtils.TITLE_INFORMATION, "Processado com sucesso!");
-        }
-        scope.$dismiss();
-    });
-}
 ```
 
 ---
@@ -332,80 +243,20 @@ function selecionar() {
 ### 3. Popup de Formulário de Entrada
 
 **Cenário:** Coletar dados do usuário antes de executar uma ação.
-
-**Java:**
+**Template:** `assets/popup/PopUpFormulario.html` + `PopUpFormulario.js`
 
 ```java
-public void coletarDados(BigDecimal codProj) throws Exception {
+public void coletarDados(BigDecimal codRegistro) throws Exception {
     String popup = new PopUpBuilder.Builder()
         .setTitle("Informações Adicionais")
         .setHtmlFile(getClass().getResourceAsStream("/popup/PopUpFormulario.html"))
         .setJsFile(getClass().getResourceAsStream("/popup/PopUpFormulario.js"))
         .setWidth(500)
         .setHeight(350)
-        .addVariable("codProj", codProj)
-        .addVariable("dataAtual", new SimpleDateFormat("dd/MM/yyyy").format(new Date()))
+        .addVariable("codRegistro", codRegistro)
         .build();
-    
+
     MessageUtils.showInfo(popup);
-}
-```
-
-**HTML (`/popup/PopUpFormulario.html`):**
-
-```html
-<sk-vbox gap="16" style="padding: 16px">
-    <div class="form-group">
-        <label>Observação</label>
-        <textarea ng-model="modelo.observacao" rows="3" class="form-control"></textarea>
-    </div>
-    
-    <div class="form-group">
-        <label>Prioridade</label>
-        <select ng-model="modelo.prioridade" class="form-control">
-            <option value="A">Alta</option>
-            <option value="M">Média</option>
-            <option value="B">Baixa</option>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label>Data Prevista: {{dataAtual}}</label>
-        <input type="date" ng-model="modelo.dataPrevista" class="form-control">
-    </div>
-    
-    <div sk-display="flex" style="justify-content: flex-end; gap: 8px">
-        <button class="btn" ng-click="$dismiss()">Cancelar</button>
-        <button class="btn" ng-click="salvar()" brand>Salvar</button>
-    </div>
-</sk-vbox>
-```
-
-**JavaScript (`/popup/PopUpFormulario.js`):**
-
-```javascript
-scope.modelo = { prioridade: 'M' };
-scope.salvar = salvar;
-
-function salvar() {
-    if (!scope.modelo.observacao) {
-        MessageUtils.showAlert(MessageUtils.TITLE_WARNING, "Preencha a observação!");
-        return;
-    }
-    
-    ServiceProxy.callService('meuModulo@ProjetoSP.atualizar', {
-        params: {
-            P_CODPROJ: codProj,
-            P_OBS: scope.modelo.observacao,
-            P_PRIORIDADE: scope.modelo.prioridade,
-            P_DATA_PREV: scope.modelo.dataPrevista
-        }
-    }, {}).then(response => {
-        if (response.responseBody.success) {
-            MessageUtils.showInfo(MessageUtils.TITLE_INFORMATION, "Dados salvos!");
-            scope.$dismiss();
-        }
-    });
 }
 ```
 
@@ -413,70 +264,22 @@ function salvar() {
 
 ### 4. Popup de Exibição de Dados
 
-**Cenário:** Exibir informações detalhadas em formato de grid ou lista.
-
-**Java:**
+**Cenário:** Exibir informações detalhadas em formato de grid somente-leitura.
+**Template:** `assets/popup/PopUpDetalhes.html` + `PopUpDetalhes.js`
 
 ```java
-public void exibirDetalhes(BigDecimal codProd, BigDecimal codEmp) throws Exception {
+public void exibirDetalhes(BigDecimal codRegistro, BigDecimal codEmp) throws Exception {
     String popup = new PopUpBuilder.Builder()
-        .setTitle("Materiais-Primas do Produto")
+        .setTitle("Detalhes do Registro")
         .setHtmlFile(getClass().getResourceAsStream("/popup/PopUpDetalhes.html"))
         .setJsFile(getClass().getResourceAsStream("/popup/PopUpDetalhes.js"))
         .setWidth(800)
         .setHeight(400)
-        .addVariable("codProd", codProd)
-        .addVariable("codEmp", codEmp)
+        .addVariable("codRegistro", codRegistro)
+        .addVariable("codemp", codEmp)
         .build();
-    
+
     MessageUtils.showInfo(popup);
-}
-```
-
-**HTML (`/popup/PopUpDetalhes.html`):**
-
-```html
-<sk-dataset
-    id="dsDetalhes"
-    entity-name="DhViewMateriais"
-    sk-dataset-created="onDatasetCreated(dataset)"
-    sk-standalone>
-    <sk-field pattern="CODPROD,NOMEPROD,QTDEST,QTDRES"></sk-field>
-</sk-dataset>
-
-<sk-vbox gap="8" style="padding: 8px">
-    <label style="font-weight: bold; font-size: 14px">
-        Materiais-Primas - Produto: {{codProd}}
-    </label>
-    
-    <sk-datagrid
-        sk-dataset="dsDetalhes"
-        sk-allow-multiple-selection="false"
-        sk-editable="false">
-        <sk-datagrid-custom-column sk-field-name="CODPROD" width="100"/>
-        <sk-datagrid-custom-column sk-field-name="NOMEPROD" width="250"/>
-        <sk-datagrid-custom-column sk-field-name="QTDEST" width="100"/>
-        <sk-datagrid-custom-column sk-field-name="QTDRES" width="100"/>
-    </sk-datagrid>
-    
-    <div sk-display="flex" style="justify-content: flex-end">
-        <button class="btn" ng-click="$dismiss()">Fechar</button>
-    </div>
-</sk-vbox>
-```
-
-**JavaScript (`/popup/PopUpDetalhes.js`):**
-
-```javascript
-scope.onDatasetCreated = onDatasetCreated;
-
-function onDatasetCreated(dataset) {
-    if (dataset.getEntityName() === "DhViewMateriais") {
-        dataset.addCriteriaProvider(new CriteriaProvider(
-            Criteria("this.CODPROD = ? AND this.CODEMP = ?", codProd, codEmp)
-        ));
-        dataset.initAndRefresh();
-    }
 }
 ```
 

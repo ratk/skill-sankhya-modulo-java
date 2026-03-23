@@ -64,8 +64,9 @@ br.com.sankhya.dstech.
 | **Prefixo de tabelas** | `AD_` (convencional) | Prefixo do addon (nunca `AD_`) |
 | **Helpers** | `br.com.sankhya.dstech.helper.*` (modelo disponível) | Classes ad-hoc por addon |
 
-> **NUNCA** sugerir sankhya-js, Design System, xhtml5 ou qualquer artefato de frontend.
 > **NUNCA** usar anotações `@ActionButton`, `@Listener`, `@Job`, `@Service`, `@BusinessRule`.
+> **NUNCA** sugerir sankhya-js, Design System, xhtml5 ou qualquer artefato de frontend nativo do Addon Studio.
+> **ÚNICA exceção de UI:** PopUpBuilder — HTML/JS injetado via `MessageUtils.showInfo()`. Usar somente quando `ctx.confirmarSimNao()` for insuficiente.
 
 ---
 
@@ -178,6 +179,15 @@ Templates Java prontos para copiar e adaptar em `examples/`:
 - **`examples/Modelo_RegraPreferencia.java`** — Interface Regra via preferência MODREGCENTRAL
 - **`examples/Modelo_Helper.java`** — Helper estático com exemplos de DwfUtils, JapeFactory, helpers dstech e execWithTx
 - **`examples/Modelo_PopUpHelper.java`** — Helper para popups personalizados com PopUpBuilder
+
+## Templates de Popup
+
+Templates HTML/JS prontos para copiar em `assets/popup/`:
+
+- **`assets/popup/PopUpConfirmacao.html` / `.js`** — Confirmação Sim/Não com ícone e botões
+- **`assets/popup/PopUpSelecao.html` / `.js`** — Seleção em grid com filtro via CriteriaProvider
+- **`assets/popup/PopUpFormulario.html` / `.js`** — Formulário com textarea, select e date
+- **`assets/popup/PopUpDetalhes.html` / `.js`** — Exibição de dados somente-leitura em grid
 
 ---
 
