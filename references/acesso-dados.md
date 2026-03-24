@@ -89,7 +89,7 @@ JapeFactory.dao("AD_NOMETABELA")
 ### Buscar com transação explícita (JdbcWrapper da sessão)
 
 ```java
-import br.com.sankhya.jape.util.JdbcWrapper;
+import br.com.sankhya.jape.dao.JdbcWrapper;  // import correto
 
 // Dentro de evento — usar o JdbcWrapper do evento para mesma transação
 JdbcWrapper jdbc = pEvent.getJdbcWrapper();
@@ -217,85 +217,137 @@ BigDecimal arredondado = BigDecimalUtil.getRounded(valor, 2);
 
 ---
 
-## JdbcWrapper — SQL Direto
+## JdbcWrapper + NativeSql — SQL Nativo
 
-Usar **apenas** quando JapeFactory/DwfUtils não atenderem (ex: GROUP BY, subconsultas, UPDATEs em massa).
+Usar **apenas** quando JapeFactory/DwfUtils não atenderem (ex: GROUP BY, subconsultas, metadados do catálogo).
+
+> **ATENÇÃO:** `JdbcWrapper` **não executa queries diretamente**.
+> Quem executa é o `NativeSql`. O `JdbcWrapper` gerencia a sessão/conexão.
+>
+> Import correto: `import br.com.sankhya.jape.dao.JdbcWrapper;`
+> (NÃO usar `br.com.sankhya.jape.util.JdbcWrapper`)
+
+### Imports necessários
 
 ```java
-import br.com.sankhya.jape.util.JdbcWrapper;
+import br.com.sankhya.jape.dao.JdbcWrapper;
+import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
+import br.com.sankhya.modelcore.MGEModelException;
+import com.sankhya.util.JdbcUtils;
 import java.sql.ResultSet;
-
-// Obter JdbcWrapper (fora de evento)
-JdbcWrapper jdbc = EntityFacadeFactory.getDWFFacade().getJdbcWrapper();
-
-// Dentro de evento — usar o JdbcWrapper do evento (mesma transação)
-JdbcWrapper jdbc = pEvent.getJdbcWrapper();
-
-// Executar query
-ResultSet rs = null;
-try {
-    rs = jdbc.executeQuery(
-            "SELECT SUM(VLRTOTAL) FROM AD_NOMETABELA WHERE STATUS = ?",
-            new Object[]{"F"});
-
-    if (rs.next()) {
-        BigDecimal soma = rs.getBigDecimal(1);
-    }
-} finally {
-    if (rs != null) rs.close();
-    // NÃO fechar o jdbc — o framework gerencia o ciclo de vida
-}
-
-// UPDATE em massa
-jdbc.executeUpdate(
-        "UPDATE AD_NOMETABELA SET STATUS = ? WHERE DTREGISTRO < ?",
-        new Object[]{"E", dataLimite});
 ```
 
-### Regras do JdbcWrapper
+### Padrão completo com arquivo .sql
 
-- **Nunca chamar `jdbc.close()`** — o framework gerencia a conexão
-- **Dentro de evento**: sempre usar `pEvent.getJdbcWrapper()` para garantir mesma transação
-- **Fora de evento**: `EntityFacadeFactory.getDWFFacade().getJdbcWrapper()`
-- **ResultSet**: sempre fechar com `finally`
-
-### Query Cross-Database (SQL Server / Oracle) com Fallback
-
-Para queries em catálogos do sistema (metadados, colunas, tabelas), SQL Server e Oracle
-usam views diferentes. Usar try-catch para tentar SQL Server primeiro:
+Preferir arquivos `.sql` para queries complexas. Para queries simples, pode-se
+passar a SQL diretamente (ver seção abaixo).
 
 ```java
-private static ResultSet executarQueryCrossDb(JdbcWrapper jdbc) throws Exception {
-    // Tentativa 1 — SQL Server / H2 (INFORMATION_SCHEMA)
-    String sqlSqlServer =
-        "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, " +
-        "       COALESCE(CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, 0) AS TAMANHO " +
-        "FROM INFORMATION_SCHEMA.COLUMNS " +
-        "WHERE COLUMN_NAME LIKE 'AD!_%' ESCAPE '!' " +
-        "ORDER BY TABLE_NAME, COLUMN_NAME";
+JdbcWrapper jdbc = null;
+NativeSql   sql  = null;
+ResultSet   rset = null;
 
-    // Tentativa 2 — Oracle (USER_TAB_COLUMNS = schema atual)
-    // Para outro schema: ALL_TAB_COLUMNS WHERE OWNER = 'SANKHYA'
-    String sqlOracle =
-        "SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, " +
-        "       CASE WHEN DATA_TYPE IN ('VARCHAR2','CHAR','NVARCHAR2','NCHAR') " +
-        "            THEN CHAR_LENGTH ELSE 0 END AS TAMANHO " +
-        "FROM USER_TAB_COLUMNS " +
-        "WHERE COLUMN_NAME LIKE 'AD!_%' ESCAPE '!' " +
-        "ORDER BY TABLE_NAME, COLUMN_NAME";
+try {
+    jdbc = EntityFacadeFactory.getDWFFacade().getJdbcWrapper();
+    jdbc.openSession();
 
-    try {
-        return jdbc.executeQuery(sqlSqlServer, new Object[0]);
-    } catch (Exception e1) {
-        try {
-            return jdbc.executeQuery(sqlOracle, new Object[0]);
-        } catch (Exception e2) {
-            throw MGEModelException.prettyMsg(
-                "Metadados indisponíveis. Verifique SQL Server/Oracle.", e2);
-        }
+    // Carrega SQL de arquivo no classpath (relativo à classe ou absoluto)
+    sql = new NativeSql(jdbc, MinhaClasse.class, "/pacote/sql/minhaBusca.sql");
+
+    // Parâmetros nomeados (SQL usa :NOMEPARAM)
+    sql.setNamedParameter("NUNOTA",    nuNota);
+    sql.setNamedParameter("STATUS",    "F");
+    sql.setNamedParameter("REFERENCIA", referencia);
+
+    rset = sql.executeQuery();
+
+    while (rset.next()) {
+        BigDecimal valor = BigDecimalUtil.getValueOrZero(rset.getBigDecimal("VALOR"));
+        // processar...
     }
+
+} catch (Exception e) {
+    MGEModelException.throwMe(e);
+} finally {
+    NativeSql.releaseResources(sql);    // libera NativeSql
+    JdbcUtils.closeResultSet(rset);     // fecha ResultSet
+    JdbcWrapper.closeSession(jdbc);     // fecha sessão (método estático)
 }
+```
+
+### Arquivo .sql com parâmetros nomeados
+
+```sql
+-- /src/resources/pacote/sql/minhaBusca.sql
+SELECT
+    c.CAMPO1,
+    c.CAMPO2,
+    i.VLRTOTAL
+FROM TGFCAB c
+JOIN TGFITE i ON i.NUNOTA = c.NUNOTA
+WHERE c.NUNOTA     = :NUNOTA
+  AND c.STATUSNOTA = :STATUS
+  AND c.DTNEG      >= :REFERENCIA
+ORDER BY c.DTNEG
+```
+
+### Quando usar arquivo .sql vs. SQL inline
+
+- **Arquivo .sql:** queries complexas com múltiplos JOINs, subconsultas, GROUP BY
+- **SQL inline (simples):** uma tabela, poucos campos, sem subconsulta — passar diretamente ao construtor de NativeSql
+
+### Ciclo de vida — regras
+
+| Ação | Como |
+|---|---|
+| Abrir sessão | `jdbc.openSession()` — obrigatório antes de usar NativeSql |
+| Fechar sessão | `JdbcWrapper.closeSession(jdbc)` — estático, no `finally` |
+| Liberar NativeSql | `NativeSql.releaseResources(sql)` — no `finally` |
+| Fechar ResultSet | `JdbcUtils.closeResultSet(rset)` — no `finally` |
+| Dentro de evento | usar `pEvent.getJdbcWrapper()` — não chamar `openSession()`, sessão já está aberta |
+
+### Query Cross-Database (SQL Server / Oracle) com Fallback via NativeSql
+
+Para queries em catálogos do sistema (metadados, colunas), usar dois arquivos `.sql`
+e tentar SQL Server primeiro:
+
+```java
+JdbcWrapper jdbc = null;
+NativeSql   sql  = null;
+ResultSet   rset = null;
+
+try {
+    jdbc = EntityFacadeFactory.getDWFFacade().getJdbcWrapper();
+    jdbc.openSession();
+
+    // Tenta SQL Server / H2 (INFORMATION_SCHEMA)
+    try {
+        sql = new NativeSql(jdbc, MinhaClasse.class, "/pacote/sql/buscarSqlServer.sql");
+        rset = sql.executeQuery();
+    } catch (Exception e1) {
+        // Fallback Oracle (USER_TAB_COLUMNS — schema atual)
+        // Para outro schema: editar SQL para ALL_TAB_COLUMNS WHERE OWNER = 'SANKHYA'
+        NativeSql.releaseResources(sql);
+        sql = new NativeSql(jdbc, MinhaClasse.class, "/pacote/sql/buscarOracle.sql");
+        rset = sql.executeQuery();
+    }
+
+    while (rset.next()) {
+        // processar...
+    }
+
+} catch (Exception e) {
+    MGEModelException.throwMe(e);
+} finally {
+    NativeSql.releaseResources(sql);
+    JdbcUtils.closeResultSet(rset);
+    JdbcWrapper.closeSession(jdbc);
+}
+```
+
+> **ESCAPE '!'** nos arquivos .sql — trata o `_` como literal no LIKE:
+> `COLUMN_NAME LIKE 'AD!_%' ESCAPE '!'` casa com colunas que começam com `AD_`.
 ```
 
 > **ESCAPE '!'** — trata o `_` como literal (não wildcard) no LIKE.

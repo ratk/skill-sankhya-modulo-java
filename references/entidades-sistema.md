@@ -94,8 +94,11 @@ JapeFactory.dao(DynamicEntityNames.FINANCEIRO).findByPK(nuFin);
 ### Financeiro — filtros
 
 ```java
-// Títulos em aberto (não baixados)
-"this.RECDESP = 'R' AND this.STATUSNFE = 'P'"
+// Títulos a receber em aberto (não baixados)
+"this.RECDESP = 1 AND this.STATUSNFE = 'P'"
+
+// Títulos a pagar em aberto
+"this.RECDESP = -1 AND this.STATUSNFE = 'P'"
 
 // Por parceiro
 "this.CODPARC = ?"
@@ -148,7 +151,7 @@ JapeFactory.dao(DynamicEntityNames.FINANCEIRO).findByPK(nuFin);
 | `DTVENC` | Timestamp | Data de vencimento |
 | `DTBAIXA` | Timestamp | Data de baixa |
 | `STATUSNFE` | String | Status: `P`=pendente, `B`=baixado, `C`=cancelado |
-| `RECDESP` | String | `R`=receber, `P`=pagar |
+| `RECDESP` | BigDecimal | `1`=receita (contas a receber), `-1`=despesa (contas a pagar) |
 
 ### Usuários (TGFUSU)
 
