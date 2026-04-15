@@ -210,4 +210,5 @@ Carregar o arquivo correspondente ao aprofundar um tópico:
 | Helpers prontos — CabecalhoNotaHelper, ParceiroHelper, LancarTelaHelper, DwfUtils, etc. | `references/helpers-dstech.md` |
 | Boas práticas — erros, logging, transações, performance, design de helpers | `references/boas-praticas.md` |
 | Entidades nativas — DynamicEntityNames, campos TGFCAB/TGFITE/TGFFIN/TGFUSU | `references/entidades-sistema.md` |
+| Estrutura completa de tabelas Sankhya (campos, PKs, FKs, enums, entityNames) — fonte primária para validar campos antes de gerar código | skill: **sankhya-dicionario** |
 | Popups personalizados — PopUpBuilder, HTML/JS, Angular, ServiceProxy | `references/popup-personalizado.md` |
