@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.regradenegocio;
+package br.com.sankhya.dstech.nomedemanda.regra;
 
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.modelcore.MGEModelException;
@@ -33,7 +33,8 @@ public class Modelo_RegraPreferencia implements Regra {
                 arg0.getPrePersistEntityState().getNewVO().asBigDecimal("NUNOTA"));
 
             // lógica principal aqui
-            // NomeModuloHelper.processar(nuNota, tipMov);
+			// NomeService nomeService = new NomeService();
+            // nomeService.processar(nuNota, tipMov);
 
         } catch (Exception ex) {
             throw MGEModelException.prettyMsg("Erro na regra de negócio: <br>" + ex.getMessage(), ex);

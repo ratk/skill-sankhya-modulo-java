@@ -17,39 +17,33 @@ projeto-dstech/
 │   └── src/
 │       └── br/com/sankhya/dstech/
 │           ├── nomedemanda/               ← substituir pelo nome real do módulo
-│           │   ├── botaoacao/
+│           │   ├── actionbutton/
 │           │   │   └── NomeAction.java          ← AcaoRotinaJava
-│           │   ├── botaoacao/external/
-│           │   │   └── NomeActionExternal.java  ← Proxy CustomModuleLoader
-│           │   ├── eventos/
+│           │   ├── event/
 │           │   │   └── NomeEvento.java          ← EventoProgramavelJava
-│           │   ├── eventos/external/
-│           │   │   └── NomeEventoExternal.java  ← Proxy CustomModuleLoader
-│           │   ├── acoesagendadas/
-│           │   │   └── NomeAgendada.java        ← ScheduledAction
-│           │   ├── acoesagendadas/external/
-│           │   │   └── NomeAgendadaExternal.java ← Proxy CustomModuleLoader
-│           │   ├── regradenegocio/
+│           │   ├── job/
+│           │   │   └── NomeJob.java             ← ScheduledAction
+│           │   ├── regra/
 │           │   │   ├── NomeRegra.java           ← RegraNegocioJava
 │           │   │   └── NomeRegraPreferencia.java ← Regra (via preferência)
-│           │   └── regradenegocio/external/
-│           │       └── NomeRegraExternal.java   ← Proxy CustomModuleLoader
+│           │   ├── service/
+│           │   │   └── NomeService.java         ← Regras de negócio
+│           │   ├── repository/
+│           │   │   └── NomeRepository.java      ← Acesso a dados (entidades AD_*)
+│           │   ├── exception/
+│           │   │   └── NomeModuloException.java ← Exceções de domínio com código rastreável
+│           │   ├── dto/
+│           │   │   └── NomeDto.java             ← Transferência de dados entre camadas
+│           │   ├── enums/
+│           │   │   └── AdicionalEntityNames.java ← Entidades customizadas AD_*
+│           │   └── helper/
+│           │       └── NomePopUpHelper.java     ← Helper de apresentação (PopUpBuilder)
 │           ├── helper/                    ← Helpers transversais (todo o projeto)
-│           │   ├── CabecalhoNotaHelper.java
-│           │   ├── ItemNotaHelper.java
-│           │   ├── ParceiroHelper.java
-│           │   ├── ProdutoHelper.java
-│           │   ├── EmpresaHelper.java
-│           │   ├── UsuarioHelper.java
-│           │   ├── TipoOperacaoHelper.java
-│           │   ├── ContratoArmazemHelper.java
-│           │   ├── ConfirmarNotaHelper.java
-│           │   └── LancarTelaHelper.java
-│           ├── utils/
-│           │   ├── DwfUtils.java
-│           │   └── MessageUtils.java
-│           └── enums/
-│               └── AdicionalEntityNames.java
+│           │   └── JapeHelper.java
+│           └── utils/
+│               ├── DwfUtils.java
+│               ├── MessageUtils.java
+│               └── PopUpBuilder.java      ← Não nativo — copiar de examples/PopUpBuilder.java
 ├── Kotlin/                               ← utilitários Kotlin (MathUtils, ErrorHandle)
 │   └── src/br/com/sankhya/dstech/utils/
 ├── build.gradle
@@ -66,67 +60,42 @@ projeto-dstech/
 
 | Camada | Pacote | Substituir |
 |---|---|---|
-| Eventos do módulo | `br.com.sankhya.dstech.nomedemanda.eventos` | `nomedemanda` → nome real |
-| Eventos externos | `br.com.sankhya.dstech.nomedemanda.eventos.external` | idem |
-| Botões do módulo | `br.com.sankhya.dstech.nomedemanda.botaoacao` | idem |
-| Botões externos | `br.com.sankhya.dstech.nomedemanda.botaoacao.external` | idem |
-| Ações agendadas | `br.com.sankhya.dstech.nomedemanda.acoesagendadas` | idem |
-| Regras de negócio | `br.com.sankhya.dstech.nomedemanda.regradenegocio` | idem |
-| Helpers transversais | `br.com.sankhya.dstech.helper` | fixo |
+| Botões de ação | `br.com.sankhya.dstech.nomedemanda.actionbutton` | `nomedemanda` → nome real |
+| Eventos | `br.com.sankhya.dstech.nomedemanda.event` | idem |
+| Jobs agendados | `br.com.sankhya.dstech.nomedemanda.job` | idem |
+| Regras de negócio | `br.com.sankhya.dstech.nomedemanda.regra` | idem |
+| Service | `br.com.sankhya.dstech.nomedemanda.service` | idem |
+| Repository | `br.com.sankhya.dstech.nomedemanda.repository` | idem |
+| Exception | `br.com.sankhya.dstech.nomedemanda.exception` | idem |
+| DTO | `br.com.sankhya.dstech.nomedemanda.dto` | idem |
+| Enums do módulo | `br.com.sankhya.dstech.nomedemanda.enums` | idem |
+| Helper do módulo | `br.com.sankhya.dstech.nomedemanda.helper` | idem |
 | Utilitários | `br.com.sankhya.dstech.utils` | fixo |
-| Enums | `br.com.sankhya.dstech.enums` | fixo |
-
-> "eventos" é **plural** — seguir exatamente o padrão do modelo.
 
 ### Classes
 
 | Tipo | Sufixo | Exemplo |
 |---|---|---|
-| Evento | `Evento` ou `Modelo` | `PesoEstimadoOrdemColetaEvento` |
-| Evento externo | `External` | `NomeEventoExternal` |
-| Botão de ação | `Action` ou `Modelo` | `CriarOrdemCargaAction` |
-| Botão externo | `External` | `NomeActionExternal` |
-| Ação agendada | — | `ProcessarFinanceiroAgendado` |
-| Regra de negócio | — | `ValidarNotaVendaRegra` |
-| Helper | `Helper` | `CabecalhoNotaHelper` |
+| Evento | `Evento` | `PesoEstimadoEvento` |
+| Botão de ação | `Action` | `CriarOrdemCargaAction` |
+| Job agendado | `Job` | `ProcessarFinanceiroJob` |
+| Regra de negócio | `Regra` | `ValidarNotaVendaRegra` |
+| Regra via preferência | `RegraPreferencia` | `ValidarNotaVendaRegraPreferencia` |
+| Service | `Service` | `OrdemCargaService` |
+| Repository | `Repository` | `OrdemCargaRepository` |
+| Exception | `Exception` | `OrdemCargaException` |
+| DTO | `Dto` | `OrdemCargaDto` |
+| Helper de apresentação | `PopUpHelper` | `OrdemCargaPopUpHelper` |
 | Enum de entidade | `EntityNames` | `AdicionalEntityNames` |
-| Enum de status | `Status` + domínio | `StatusAmostra` |
-
----
-
-## Helper Estático — Estrutura Padrão
-
-```java
-package br.com.sankhya.dstech.helper; // ou .nomedemanda.helper se específico do módulo
-
-import br.com.sankhya.modelcore.MGEModelException;
-import org.apache.log4j.Logger;
-
-public class NomeHelper {
-
-    private static final Logger logger = Logger.getLogger(NomeHelper.class);
-
-    private NomeHelper() {
-        throw new UnsupportedOperationException("Não é permitido instanciar esta classe");
-    }
-
-    public static RetornoTipo metodoPublico(BigDecimal id) throws Exception {
-        try {
-            // implementação
-        } catch (Exception e) {
-            MGEModelException.throwMe(e);
-        }
-        return null;
-    }
-}
-```
+| Enum de status | `Status` + domínio | `StatusOrdemCarga` |
+| Enum de tipo | `Tipo` + domínio | `TipoMovimento` |
 
 ---
 
 ## AdicionalEntityNames — Enum de Entidades Customizadas
 
 ```java
-package br.com.sankhya.dstech.enums;
+package br.com.sankhya.dstech.nomedemanda.enums;
 
 public enum AdicionalEntityNames {
     MINHA_ENTIDADE("AD_MINHAENTIDADE"),
@@ -153,6 +122,14 @@ public enum AdicionalEntityNames {
 }
 ```
 
+> Sempre usar o enum no lugar de strings literais:
+> ```java
+> // BOM
+> JapeFactory.dao(AdicionalEntityNames.ORDEM_COLETA.getEntityName()).findByPK(id);
+> // RUIM
+> JapeFactory.dao("AD_ORDEMCOLETA").findByPK(id);
+> ```
+
 ---
 
 ## Build e Deploy
@@ -172,6 +149,7 @@ targetCompatibility = '1.8'
 sourceSets {
     main {
         java { srcDirs = ['Java/src'] }
+        resources { srcDirs = ['Java/resources'] }
     }
 }
 
@@ -185,13 +163,16 @@ dependencies {
 
 jar {
     archiveFileName = 'dstech-nomemodulo.jar'
+    from('Java/resources') {
+        include "${moduleName}/**"   // inclui HTML/JS de popup e arquivos .sql
+    }
 }
 ```
 
 ### Processo de Deploy
 
 1. **Build:** `gradle jar` → gera `build/libs/dstech-nomemodulo.jar`
-2. **Empacotar ZIP:**
+2. **Empacotar ZIP** (quando houver XML de metadados):
    ```
    Metadados_NOMETABELA.zip
    ├── metadata.xml
@@ -202,11 +183,14 @@ jar {
    - Eventos: Gerenciamento → Eventos Programáveis
    - Botões: Gerenciamento → Botões de Ação
    - Regras: Gerenciamento → Regras de Negócio
-   - Agendadas: Gerenciamento → Ações Agendadas
+   - Jobs: Gerenciamento → Ações Agendadas
 
 ---
 
 ## Javadoc de Configuração (Padrão)
+
+Toda classe que precisa de registro manual no Sankhya deve ter o bloco padronizado.
+Facilita re-registro após atualizações de servidor.
 
 ```java
 /**
@@ -215,13 +199,21 @@ jar {
  * Regras aplicadas: descrever validações e transformações.
  *
  * Configuração no Sankhya:
- *   Entidade    : AD_NOMETABELA                                    (evento)
- *   Tipo        : Before Insert, Before Update                     (evento)
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.eventos.NomeEvento
+ *   Entidade    : AD_NOMETABELA                                       (evento)
+ *   Tipo        : Before Insert, Before Update                        (evento)
+ *   Classe Java : br.com.sankhya.dstech.nomedemanda.event.NomeEvento
  *
  *   — ou —
  *
- *   Entidade : AD_NOMETABELA                                       (botão)
- *   Classe   : br.com.sankhya.dstech.nomedemanda.botaoacao.NomeAction
+ *   Entidade : AD_NOMETABELA                                          (botão)
+ *   Classe   : br.com.sankhya.dstech.nomedemanda.actionbutton.NomeAction
+ *
+ *   — ou —
+ *
+ *   Classe   : br.com.sankhya.dstech.nomedemanda.job.NomeJob          (job)
+ *
+ *   — ou —
+ *
+ *   Classe   : br.com.sankhya.dstech.nomedemanda.regra.NomeRegra      (regra)
  */
 ```

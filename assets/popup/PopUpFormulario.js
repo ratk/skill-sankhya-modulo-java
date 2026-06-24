@@ -1,5 +1,5 @@
-// Variáveis disponíveis (passadas via addVariable no Java):
-//   codRegistro — PK do registro a ser atualizado
+/* Variáveis disponíveis (passadas via addVariable no Java):
+   codRegistro — PK do registro a ser atualizado*/
 
 scope.modelo = { prioridade: 'M' };
 scope.salvar = salvar;

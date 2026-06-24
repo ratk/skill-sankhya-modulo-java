@@ -1,7 +1,7 @@
-// Variáveis disponíveis (passadas via addVariable no Java):
-//   idRegistro — PK do registro a processar
-//   mensagem   — texto principal exibido no popup
-//   detalhe    — texto secundário (pode ser vazio)
+/* Variáveis disponíveis (passadas via addVariable no Java):
+   idRegistro — PK do registro a processar
+   mensagem   — texto principal exibido no popup
+   detalhe    — texto secundário (pode ser vazio)*/
 
 scope.mensagem = mensagem || "Deseja confirmar esta operação?";
 scope.detalhe  = detalhe  || "Esta ação não pode ser desfeita.";

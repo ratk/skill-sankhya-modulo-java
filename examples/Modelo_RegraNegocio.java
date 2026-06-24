@@ -1,4 +1,4 @@
-package br.com.sankhya.dstech.nomedemanda.regradenegocio;
+package br.com.sankhya.dstech.nomedemanda.regra;
 
 import br.com.sankhya.dstech.helper.CabecalhoNotaHelper;
 import br.com.sankhya.dstech.utils.MessageUtils;
@@ -10,7 +10,6 @@ import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.comercial.AtributosRegras;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.jape.wrapper.JapeFactory;
-import br.com.sankhya.jape.wrapper.JapeWrapper;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -21,7 +20,7 @@ import java.util.Collection;
  * Configuração no Sankhya:
  *   Menu: Configurações → Regras de Negócio
  *   Entidade    : CabecalhoNota (ou entidade alvo)
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.regradenegocio.NomeRegra
+ *   Classe Java : br.com.sankhya.dstech.nomedemanda.regra.NomeRegra
  */
 public class Modelo_RegraNegocio implements RegraNegocioJava {
 
@@ -77,7 +76,8 @@ public class Modelo_RegraNegocio implements RegraNegocioJava {
             }
 
             // lógica principal aqui
-            // NomeModuloHelper.validar(nuNota, notaVO);
+            // NomeService nomeService = new NomeService();
+			// nomeService.validar(nuNota, notaVO);
 
             sucesso = true;
 
@@ -126,9 +126,9 @@ public class Modelo_RegraNegocio implements RegraNegocioJava {
     public int existeLibLimite(BigDecimal nuNota, BigDecimal codEvento) throws MGEModelException {
         try {
             JapeWrapper libDAO = JapeFactory.dao(DynamicEntityNames.LIBERACAO_LIMITE);
-            Collection<DynamicVO> libVO = libDAO.find(
-                "NUCHAVE = ? AND EVENTO = ? AND TABELA = 'TGFCAB'",
-                new Object[]{nuNota, codEvento});
+            Collection<DynamicVO> libVO = JapeFactory.dao(DynamicEntityNames.LIBERACAO_LIMITE)
+				.find("NUCHAVE = ? AND EVENTO = ? AND TABELA = 'TGFCAB'",
+              new Object[]{nuNota, codEvento});
             return libVO == null ? 0 : libVO.size();
         } catch (Exception e) {
             MGEModelException.throwMe(e);

@@ -1,6 +1,6 @@
-// Variáveis disponíveis (passadas via addVariable no Java):
-//   nuNota  — PK do registro principal
-//   filtro  — parâmetro de filtro opcional
+/* Variáveis disponíveis (passadas via addVariable no Java):
+   nuNota  — PK do registro principal
+   filtro  — parâmetro de filtro opcional*/
 
 scope.selecionar = selecionar;
 scope.onDatasetCreated = onDatasetCreated;

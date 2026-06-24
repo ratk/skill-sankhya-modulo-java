@@ -1,20 +1,20 @@
-# skill-sankhya-modulo-java
+# sankhya-modulo-java
 
-Skill para Claude Code especializada em desenvolvimento de **módulos Java complementares para o ERP Sankhya OM** — abordagem sem Addon Studio, com registro manual de artefatos.
+Skill para Claude Code especializada em desenvolvimento de **módulos Java complementares para o ERP Sankhya OM** — sem Addon Studio, com registro manual de artefatos.
 
 ---
 
 ## O que esta skill faz
 
-Transforma o Claude em um especialista sênior em módulos Java Sankhya OM, capaz de:
+Transforma o Claude em um especialista em módulos Java Sankhya OM, capaz de:
 
-- Criar **EventoProgramavelJava** (eventos CRUD automáticos em entidades)
+- Criar **EventoProgramavelJava** (eventos CRUD em entidades)
 - Criar **AcaoRotinaJava** (botões de ação manuais)
 - Criar **RegraNegocioJava** / **Regra** (lógica no ciclo de confirmação/faturamento)
 - Criar **ScheduledAction** (jobs agendados via Cuckoo)
-- Implementar o padrão **External / CustomModuleLoader** (dois JARs, proxy + lógica)
+- Estruturar as camadas **service**, **repository**, **exception** e **dto**
 - Gerar **XML do Construtor de Telas** (criação de tabelas e telas via metadados)
-- Usar os **helpers do modelo dstech** (`CabecalhoNotaHelper`, `ParceiroHelper`, `EnviaEmailHelper`, etc.)
+- Criar **popups personalizados** via `PopUpBuilder` (confirmação, seleção em grid, formulário, wizard)
 - Seguir os **antipadrões proibidos** e boas práticas da plataforma
 
 ---
@@ -23,206 +23,103 @@ Transforma o Claude em um especialista sênior em módulos Java Sankhya OM, capa
 
 ```
 sankhya-modulo-java/
-├── SKILL.md                        Instruções principais da skill
-├── examples/                       Templates Java prontos para copiar
-│   ├── Modelo_Evento.java
-│   ├── Modelo_EventoExternal.java
-│   ├── Modelo_BotaoAcao.java
-│   ├── Modelo_BotaoAcaoExternal.java
-│   ├── Modelo_AcaoAgendada.java
-│   ├── Modelo_RegraNegocio.java
-│   ├── Modelo_RegraPreferencia.java
-│   └── Modelo_Helper.java
-└── references/                     Documentação técnica detalhada
-    ├── acesso-dados.md             JapeFactory, DwfUtils, EntityFacade, JdbcWrapper
-    ├── boas-praticas.md            Erros, logging, transações, performance
-    ├── botao-acao.md               AcaoRotinaJava, ContextoAcao, External
-    ├── construtor-de-telas.md      XML de metadados, campos, relacionamentos
-    ├── entidades-sistema.md        DynamicEntityNames, campos TGFCAB/TGFITE/TGFFIN
-    ├── estrutura-modulo.md         Pacotes dstech, build.gradle, deploy
-    ├── eventos-java.md             EventoProgramavelJava, padrões, External
-    ├── helpers-dstech.md           Todos os helpers do modelo dstech
-    └── regra-negocio.md            RegraNegocioJava, Regra, ScheduledAction, External
+├── SKILL.md                            Instruções principais da skill
+├── README.md                           Este arquivo
+│
+├── instructions/
+│   └── encoding-instructions.md        ISO-8859-1 obrigatório — regras e comandos de conversão
+│
+├── evals/
+│   └── evals.json                      Casos de teste para avaliação da skill
+│
+├── examples/                           Templates Java prontos para copiar
+│   ├── Modelo_ActionButton.java        AcaoRotinaJava — valida UI, abre sessão, delega para component/
+│   ├── Modelo_Event.java               EventoProgramavelJava com 7 métodos, delega para component/
+│   ├── Modelo_Job.java                 ScheduledAction — abre sessão, delega para component/
+│   ├── Modelo_RegraNegocio.java        RegraNegocioJava completo
+│   ├── Modelo_RegraPreferencia.java    Interface Regra via preferência
+│   ├── Modelo_Service.java             Service — regras puras sem acesso a banco
+│   ├── Modelo_Repository.java          Repository — acesso a dados para entidades AD_*
+│   ├── Modelo_Exception.java           Exceção de domínio com códigos rastreáveis [MOD_NNNN]
+│   ├── Modelo_Dto.java                 DTO com construtor a partir de DynamicVO
+│   ├── Modelo_JapeHelper.java          Gerência de sessão e transação
+│   ├── Modelo_PopUpHelper.java         Popup via PopUpBuilder
+│   └── PopUpBuilder.java               Utilitário não nativo — copiar para utils/
+│
+├── assets/
+│   └── popup/                          Templates HTML/JS de popup
+│       ├── PopUpConfirmacao.html / .js
+│       ├── PopUpSelecao.html / .js
+│       ├── PopUpFormulario.html / .js
+│       ├── PopUpDetalhes.html / .js
+│       └── PopUpWizard2Paginas.html / .js
+│
+└── references/                         Documentação técnica detalhada
+    ├── estrutura-modulo.md             Pacotes, diretórios, build.gradle, deploy
+    ├── event-java.md                   EventoProgramavelJava, padrões, ModifyingFields
+    ├── action-button.md                AcaoRotinaJava, ContextoAcao, padrões
+    ├── component.md                    Component — orquestração, padrões por artefato
+    ├── controller.md                   Controller — endpoint REST/serviço, registro manual
+    ├── service-repository.md           Service (puro), Repository, Exception, DTO
+    ├── regra-negocio.md                RegraNegocioJava, Regra, ScheduledAction
+    ├── acesso-dados.md                 JapeFactory, DwfUtils, EntityFacade, JdbcWrapper
+    ├── nativesql-assertivo.md          NativeSql utilitários, MapUtils, IN chunking — quando JAPE não resolve
+    ├── boas-praticas.md                Erros, logging, transações, performance, lote, EntityFacade, máquina de estados
+    ├── logger.md                       Logger (br.com.sankhya.utils.Logger), níveis, exemplos
+    ├── entidades-sistema.md            DynamicEntityNames, campos TGFCAB/TGFITE/TGFFIN
+    ├── construtor-de-telas.md          XML de metadados, campos, relacionamentos
+    ├── popup-personalizado.md          PopUpBuilder, HTML/JS, Angular, regras críticas
+    ├── sankhyautil.md                  StringUtils, TimeUtils, SQLUtils, JsonUtils e outros
+    ├── comercial-notas.md              CACHelper, ImpostosHelpper, CentralFinanceiro, confirmar nota
+    ├── organizacao-pacotes-java.md     Conflitos de ClassLoader, segmento nomedemanda obrigatório
+    ├── clean-code-metodos.md           Nomes, tamanho, return early, SRP, efeitos colaterais
+    └── clean-code-variaveis.md         Nomes, constantes, booleanos, escopo, convenções Sankhya
 ```
 
 ---
 
-## Pacote Padrão
-
-Todos os módulos seguem o pacote raiz `br.com.sankhya.dstech`:
+## Arquitetura de Camadas
 
 ```
 br.com.sankhya.dstech.
   nomedemanda/
-    botaoacao/               ← AcaoRotinaJava
-    botaoacao/external/      ← Proxy CustomModuleLoader
-    eventos/                 ← EventoProgramavelJava
-    eventos/external/        ← Proxy CustomModuleLoader
-    acoesagendadas/          ← ScheduledAction (org.cuckoo.core)
-    acoesagendadas/external/ ← Proxy CustomModuleLoader
-    regradenegocio/          ← RegraNegocioJava / Regra
-    regradenegocio/external/ ← Proxy CustomModuleLoader
-  helper/                    ← Helpers transversais reutilizáveis
-  utils/                     ← DwfUtils, MessageUtils
-  enums/                     ← AdicionalEntityNames, StatusXxx
+    actionbutton/    ← AcaoRotinaJava — validação de UI, abre sessão, delega para component/
+    component/       ← Hub obrigatório — orquestra service/ e repository/; chamado por todos os artefatos
+    controller/      ← Endpoint REST/serviço via ServiceProvider manual — delega para component/
+    event/           ← EventoProgramavelJava — extrai VO, delega para component/
+    job/             ← ScheduledAction — abre sessão, delega para component/
+    regra/           ← RegraNegocioJava / Regra — delega para component/
+    service/         ← Regras de negócio puras — cálculos, validações; sem acesso a banco
+    repository/      ← Acesso a dados — entidades AD_* e queries nativas via NativeSql
+    exception/       ← Exceções de domínio com código rastreável [MOD_XXXX]
+    dto/             ← Transferência de dados entre camadas
+    enums/           ← AdicionalEntityNames, StatusXxx, TipoXxx
+    helper/          ← Helpers de apresentação (PopUpHelper) compartilhados na demanda
+    utils/           ← DwfUtils (consultas genéricas), MessageUtils (feedback ao usuário)
 ```
+
+> Para entidades nativas (TGFCAB, TGFPAR, TGFPRO, etc.) o `component/` acessa `JapeFactory` ou
+> `DwfUtils` diretamente — sem `repository/` dedicado. O `repository/` customizado é focado em
+> entidades `AD_*` e queries que precisam de NativeSql.
+>
+> SQL complexo: arquivos `.sql` ficam em `Java/resources/sql/` e são carregados via
+> `getResourceAsStream("/sql/nome-query.sql")` no `repository/`.
 
 ---
 
-## Helpers Disponíveis no Modelo DSTech
-
-| Helper | Entidade | O que faz |
-|---|---|---|
-| `CabecalhoNotaHelper` | TGFCAB | Busca VO do cabeçalho da nota |
-| `ItemNotaHelper` | TGFITE | Busca itens de nota (por nota, produto) |
-| `ParceiroHelper` | TGFPAR | Busca parceiro, atualiza conta contábil |
-| `ProdutoHelper` | TGFPRO | Busca produto, ativa/desativa |
-| `ServicoHelper` | TGFPRO | Busca serviço (USOPROD='S') |
-| `EmpresaHelper` | TSIEMP | Busca VO da empresa |
-| `UsuarioHelper` | TGFUSU | Busca VO do usuário |
-| `TipoOperacaoHelper` | TGFTOP | Busca tipo de operação |
-| `ContratoArmazemHelper` | TCSCON | Busca contrato de armazenagem |
-| `ConfirmarNotaHelper` | — | Confirma notas, detecta contexto (confirmando/faturando/duplicando) |
-| `LancarTelaHelper` | — | Gera links HTML para abrir telas nativas com filtro |
-| `LancarRelatorioHelper` | — | Cria SessionFile e gera link de download |
-| `EnviaEmailHelper` | TMDFMG | Insere e-mail na fila de envio |
-| `CotacaoMoedaHelper` | TGFMOE | Busca e verifica cotação de moeda |
-| `ImpostoItemNotaHelper` | TGFIMP | Busca impostos de item de nota |
-| `ItemComposicaoProdutoHelper` | TGFICP | Busca componentes de kit |
-| `CompraVendaVariosPedidoHelper` | TGFVAR | Insere registros de variação de pedido |
-
----
-
-## Exemplos de Código
-
-### Evento Programável
-
-```java
-public class PesoEstimadoEvento implements EventoProgramavelJava {
-
-    @Override
-    public void beforeInsert(PersistenceEvent event) throws Exception { processar(event); }
-    @Override
-    public void beforeUpdate(PersistenceEvent event) throws Exception { processar(event); }
-    @Override public void beforeDelete(PersistenceEvent event) throws Exception {}
-    @Override public void afterInsert(PersistenceEvent event) throws Exception {}
-    @Override public void afterUpdate(PersistenceEvent event) throws Exception {}
-    @Override public void afterDelete(PersistenceEvent event) throws Exception {}
-    @Override public void beforeCommit(TransactionContext tranCtx) throws Exception {}
-
-    private void processar(PersistenceEvent event) throws Exception {
-        DynamicVO vo = (DynamicVO) event.getVo();
-        PesoEstimadoHelper.calcular(vo);
-    }
-}
-```
-
-### Botão de Ação
-
-```java
-public class CriarOrdemCargaAction implements AcaoRotinaJava {
-
-    @Override
-    public void doAction(ContextoAcao ctx) throws Exception {
-        if (ctx.getLinhas().length == 0) {
-            ctx.setMensagemRetorno("Selecione um registro!");
-            return;
-        }
-        BigDecimal id = BigDecimalUtil.getBigDecimal(ctx.getLinhas()[0].getCampo("NUNOTA"));
-        JapeSession.SessionHandle hnd = null;
-        try {
-            hnd = JapeSession.open();
-            String link = OrdemCargaHelper.criar(id);
-            ctx.setMensagemRetorno(link);
-        } catch (Exception e) {
-            throw MGEModelException.prettyMsg("Erro: <br>" + e.getMessage(), e);
-        } finally {
-            JapeSession.close(hnd);
-        }
-    }
-}
-```
-
-### Padrão External (CustomModuleLoader)
-
-```java
-// JAR proxy — registrado no Sankhya
-public class NomeActionExternal implements AcaoRotinaJava {
-    @Override
-    public void doAction(ContextoAcao contexto) throws Exception {
-        String pref = "AD_MODACAOFINAL";
-        int codMod = MGECoreParameter.getParameterAsInt(pref);
-        EntityFacade ef = EntityFacadeFactory.getDWFFacade();
-        BigDecimal moduleID = BigDecimalUtil.getValueOrZero(BigDecimal.valueOf(codMod));
-        if (moduleID.compareTo(BigDecimal.ZERO) == 0)
-            throw new MGEModelException("Parâmetro \"" + pref + "\" não configurado.");
-        AcaoRotinaJava acao = (AcaoRotinaJava)
-                CustomModuleLoader.getClass(ef, moduleID, "br.com.sankhya.dstech.nomedemanda.botaoacao.NomeAction")
-                        .newInstance();
-        acao.doAction(contexto);
-    }
-}
-```
-
----
-
-## Instalação
-
-### Como skill standalone (fora de plugin)
-
-```bash
-# Clonar na pasta de skills do Claude Code
-git clone https://github.com/ratk/skill-sankhya-modulo-java \
-    ~/.claude/skills/sankhya-modulo-java
-```
-
-A skill será detectada automaticamente pelo Claude Code no próximo restart.
-
-### Como parte de um plugin
-
-Copiar o diretório `sankhya-modulo-java/` para dentro da pasta `skills/` do seu plugin:
-
-```
-meu-plugin/
-└── skills/
-    └── sankhya-modulo-java/
-        ├── SKILL.md
-        ├── examples/
-        └── references/
-```
-
----
-
-## Ativação
-
-A skill é ativada automaticamente quando o usuário menciona:
-
-- Termos técnicos: `EventoProgramavelJava`, `AcaoRotinaJava`, `RegraNegocioJava`, `ScheduledAction`, `JapeFactory`, `DwfUtils`, `CustomModuleLoader`, `JapeSession`, `MGEModelException`
-- Frases em português: `"módulo java"`, `"evento programável"`, `"botão de ação manual"`, `"construtor de telas"`, `"criar evento"`, `"registrar botão ação"`, `"deploy módulo java"`
-
-Ou via comando direto:
-
-```
-/sankhya-modulo-java
-```
-
----
-
-## Diferenças: Módulo Java vs. Addon Studio
+## Módulo Java vs. Addon Studio
 
 | Aspecto | Módulo Java | Addon Studio |
 |---|---|---|
 | Registro de artefatos | Manual via UI do Sankhya | Automático via anotações |
-| Frontend | **Indisponível** | xhtml5, SankhyaJS, Design System |
-| Telas/Tabelas | XML Construtor de Telas | `datadictionary/` no deploy |
+| Eventos | `EventoProgramavelJava` (manual) | `@Listener` (automático) |
+| Botões de ação | `AcaoRotinaJava` (manual) | `@ActionButton` (automático) |
+| Jobs agendados | `ScheduledAction` org.cuckoo.core | `@Job` (automático) |
+| Regras de negócio | `RegraNegocioJava` / `Regra` (manual) | `@BusinessRule` (automático) |
+| Frontend | Popups via `PopUpBuilder` | xhtml5, SankhyaJS, Design System |
+| Telas/Tabelas | XML Construtor de Telas (manual) | `datadictionary/` (deploy automático) |
 | Build | Gradle → JAR → importação manual | Gradle → deploy automático |
 | Pacote raiz | `br.com.sankhya.dstech` | `br.com.empresa.addon` |
-
----
-
-## Projeto Modelo
-
-Esta skill foi construída com base no projeto modelo `modelo-dstech-customizacoes`, mantido internamente pela DSTech. Os helpers documentados em `references/helpers-dstech.md` são os mesmos disponíveis neste projeto modelo.
 
 ---
 

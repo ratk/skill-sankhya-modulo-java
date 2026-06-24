@@ -37,9 +37,8 @@ public class NomeRegra implements RegraNegocioJava {
 ## Padrão Completo — RegraNegocioJava com Liberação de Limite
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.regradenegocio;
+package br.com.sankhya.dstech.nomedemanda.regra;
 
-import br.com.sankhya.dstech.helper.CabecalhoNotaHelper;
 import br.com.sankhya.dstech.utils.MessageUtils;
 import br.com.sankhya.extensions.regrasnegocio.ContextoRegra;
 import br.com.sankhya.extensions.regrasnegocio.RegraNegocioJava;
@@ -57,7 +56,7 @@ import java.util.Collection;
  * Regra de negócio registrada na tela Regras de Negócio do Sankhya.
  *
  * Configuração no Sankhya:
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.regradenegocio.NomeRegra
+ *   Classe Java : br.com.sankhya.dstech.nomedemanda.regra.NomeRegra
  *   Evento      : ID do evento cadastrado em Regras de Negócio
  */
 public class NomeRegra implements RegraNegocioJava {
@@ -101,7 +100,8 @@ public class NomeRegra implements RegraNegocioJava {
 
             BigDecimal nuNota = ctx.getNunota();
 
-            DynamicVO notaVO = CabecalhoNotaHelper.getVo(nuNota);
+            DynamicVO notaVO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA).findByPK(nuNota);
+            if (notaVO == null) throw new MGEModelException("Nota não encontrada: " + nuNota);
             String tipMov = notaVO.asString("TIPMOV");
 
             if ("V".equals(tipMov)) {
@@ -175,11 +175,11 @@ public class NomeRegra implements RegraNegocioJava {
 
 ## Interface `Regra` — Alternativa para Regras via Preferência
 
-Registrada como preferência no sistema (ex: `10@br.com.sankhya.dstech.nomedemanda.regradenegocio`).
+Registrada como preferência no sistema (ex: `10@br.com.sankhya.dstech.nomedemanda.regra`).
 Usada quando a regra deve ser configurável por preferência de módulo Java.
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.regradenegocio;
+package br.com.sankhya.dstech.nomedemanda.regra;
 
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.modelcore.MGEModelException;
@@ -194,7 +194,7 @@ import java.math.BigDecimal;
  *
  * Configuração no Sankhya:
  *   Preferência : NOME_PREFERENCIA
- *   Valor       : {codModulo}@br.com.sankhya.dstech.nomedemanda.regradenegocio.NomeRegraPreferencia
+ *   Valor       : {codModulo}@br.com.sankhya.dstech.nomedemanda.regra.NomeRegraPreferencia
  */
 public class NomeRegraPreferencia implements Regra {
 
@@ -244,7 +244,7 @@ Tarefa agendada registrada no Sankhya via menu **Ações Agendadas**. Interface 
 da biblioteca `org.cuckoo.core`.
 
 ```java
-package br.com.sankhya.dstech.nomedemanda.acoesagendadas;
+package br.com.sankhya.dstech.nomedemanda.job;
 
 import org.cuckoo.core.ScheduledAction;
 import org.cuckoo.core.ScheduledActionContext;
@@ -257,7 +257,7 @@ import org.apache.log4j.Logger;
  *
  * Configuração no Sankhya:
  *   Menu        : Gerenciamento → Ações Agendadas
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.acoesagendadas.NomeAgendada
+ *   Classe Java : br.com.sankhya.dstech.nomedemanda.job.NomeAgendada
  *   Frequência  : configurada na própria tela (CRON ou intervalo)
  */
 public class NomeAgendada implements ScheduledAction {
@@ -273,7 +273,8 @@ public class NomeAgendada implements ScheduledAction {
 
             logger.info("Iniciando processamento agendado...");
 
-            NomeModuloHelper.processarLote();
+            NomeService nomeService = new NomeService();
+			nomeService.processarLote();
 
             logger.info("Processamento agendado finalizado.");
 
@@ -302,242 +303,8 @@ Menu: Gerenciamento → Ações Agendadas (ou Agendador de Tarefas)
 
 Campos:
   Descrição   : nome descritivo
-  Classe Java : br.com.sankhya.dstech.nomedemanda.acoesagendadas.NomeAgendada
+  Classe Java : br.com.sankhya.dstech.nomedemanda.job.NomeAgendada
   Frequência  : CRON ou intervalo em milissegundos
 ```
 
 ---
-
-## External / CustomModuleLoader — Delegar para Outro JAR
-
-Padrão onde um JAR base ("proxy") é registrado no Sankhya e delega para um segundo JAR com a
-lógica real. Benefícios: registra o módulo uma única vez, troca a implementação por preferência
-sem re-registrar, e separa o contrato (proxy) da lógica (implementação).
-
-**Estrutura de dois módulos:**
-```
-modulo-proxy.jar      ← registrado no Sankhya (evento, botão, regra, agendada)
-  └── external/NomeXxxExternal.java   → lê preferência → carrega modulo-logica.jar
-
-modulo-logica.jar     ← contém a implementação real
-  └── NomeXxx.java    → lógica de negócio
-```
-
-O ID do módulo lógico vem de uma preferência do sistema (ex: `AD_MOD_NOMEMODULO = {ID}`).
-
----
-
-### External de Evento
-
-```java
-package br.com.sankhya.dstech.nomedemanda.eventos.external;
-
-import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
-import br.com.sankhya.jape.EntityFacade;
-import br.com.sankhya.jape.event.PersistenceEvent;
-import br.com.sankhya.jape.event.TransactionContext;
-import br.com.sankhya.modelcore.MGEModelException;
-import br.com.sankhya.modelcore.custommodule.CustomModuleLoader;
-import br.com.sankhya.modelcore.util.EntityFacadeFactory;
-import br.com.sankhya.modelcore.util.MGECoreParameter;
-import com.sankhya.util.BigDecimalUtil;
-import java.math.BigDecimal;
-
-/**
- * Classe registrada no evento — delega para outro JAR via CustomModuleLoader.
- * O JAR alvo é identificado por uma preferência do sistema.
- *
- * Configuração no Sankhya:
- *   Entidade    : AD_NOMETABELA
- *   Tipo        : Before Insert, Before Update
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.eventos.external.NomeEventoExternal
- */
-public class NomeEventoExternal implements EventoProgramavelJava {
-
-    @Override
-    public void beforeInsert(PersistenceEvent event) throws Exception {
-        chamarExterno(event);
-    }
-
-    @Override
-    public void beforeUpdate(PersistenceEvent event) throws Exception {
-        chamarExterno(event);
-    }
-
-    @Override public void beforeDelete(PersistenceEvent event) throws Exception {}
-    @Override public void afterInsert(PersistenceEvent event) throws Exception {}
-    @Override public void afterUpdate(PersistenceEvent event) throws Exception {}
-    @Override public void afterDelete(PersistenceEvent event) throws Exception {}
-    @Override public void beforeCommit(TransactionContext tranCtx) throws Exception {}
-
-    private void chamarExterno(PersistenceEvent pe) throws Exception {
-        String nomePreferencia = "AD_MOD_NOMEEVENTO";
-        int codModuloJava = MGECoreParameter.getParameterAsInt(nomePreferencia);
-        String classeAlvo = "br.com.sankhya.dstech.nomedemanda.eventos.NomeEvento";
-
-        EntityFacade ef = EntityFacadeFactory.getDWFFacade();
-        BigDecimal moduleID = BigDecimalUtil.getValueOrZero(BigDecimal.valueOf(codModuloJava));
-
-        if (moduleID.compareTo(BigDecimal.ZERO) == 0) {
-            throw new MGEModelException(
-                "Parâmetro \"" + nomePreferencia + "\" não configurado com o módulo Java.");
-        }
-
-        Object obj = CustomModuleLoader.getClass(ef, moduleID, classeAlvo).newInstance();
-        obj.getClass().getMethod("executar", PersistenceEvent.class).invoke(obj, pe);
-    }
-}
-```
-
-### External de Botão de Ação
-
-```java
-package br.com.sankhya.dstech.nomedemanda.botaoacao.external;
-
-import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
-import br.com.sankhya.extensions.actionbutton.ContextoAcao;
-import br.com.sankhya.jape.EntityFacade;
-import br.com.sankhya.modelcore.MGEModelException;
-import br.com.sankhya.modelcore.custommodule.CustomModuleLoader;
-import br.com.sankhya.modelcore.util.EntityFacadeFactory;
-import br.com.sankhya.modelcore.util.MGECoreParameter;
-import com.sankhya.util.BigDecimalUtil;
-import java.math.BigDecimal;
-
-/**
- * Classe registrada no botão — delega para outro JAR via CustomModuleLoader.
- *
- * Configuração no Sankhya:
- *   Entidade : AD_NOMETABELA
- *   Classe   : br.com.sankhya.dstech.nomedemanda.botaoacao.external.NomeActionExternal
- */
-public class NomeActionExternal implements AcaoRotinaJava {
-
-    @Override
-    public void doAction(ContextoAcao contexto) throws Exception {
-        String nomePreferencia = "AD_MOD_NOMEBOTAO";
-        int codModuloJava = MGECoreParameter.getParameterAsInt(nomePreferencia);
-        String classeAlvo = "br.com.sankhya.dstech.nomedemanda.botaoacao.NomeAction";
-
-        EntityFacade ef = EntityFacadeFactory.getDWFFacade();
-        BigDecimal moduleID = BigDecimalUtil.getValueOrZero(BigDecimal.valueOf(codModuloJava));
-
-        if (moduleID.compareTo(BigDecimal.ZERO) == 0) {
-            throw new MGEModelException(
-                "Parâmetro \"" + nomePreferencia + "\" não configurado com o módulo Java.");
-        }
-
-        AcaoRotinaJava acao = (AcaoRotinaJava)
-                CustomModuleLoader.getClass(ef, moduleID, classeAlvo).newInstance();
-        acao.doAction(contexto);
-    }
-}
-```
-
-### External de Regra de Negócio
-
-```java
-package br.com.sankhya.dstech.nomedemanda.regradenegocio.external;
-
-import br.com.sankhya.extensions.rules.RegraNegocioJava;
-import br.com.sankhya.extensions.rules.ContextoRegra;
-import br.com.sankhya.jape.EntityFacade;
-import br.com.sankhya.modelcore.MGEModelException;
-import br.com.sankhya.modelcore.custommodule.CustomModuleLoader;
-import br.com.sankhya.modelcore.util.EntityFacadeFactory;
-import br.com.sankhya.modelcore.util.MGECoreParameter;
-import com.sankhya.util.BigDecimalUtil;
-import java.math.BigDecimal;
-
-/**
- * Classe registrada na regra — delega para outro JAR via CustomModuleLoader.
- *
- * Configuração no Sankhya:
- *   Entidade    : AD_NOMETABELA
- *   Tipo        : Before Insert, Before Update (conforme necessário)
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.regradenegocio.external.NomeRegraExternal
- */
-public class NomeRegraExternal implements RegraNegocioJava {
-
-    @Override
-    public void executa(ContextoRegra ctx) throws Exception {
-        String nomePreferencia = "AD_MOD_NOMEREGRA";
-        int codModuloJava = MGECoreParameter.getParameterAsInt(nomePreferencia);
-        String classeAlvo = "br.com.sankhya.dstech.nomedemanda.regradenegocio.NomeRegra";
-
-        EntityFacade ef = EntityFacadeFactory.getDWFFacade();
-        BigDecimal moduleID = BigDecimalUtil.getValueOrZero(BigDecimal.valueOf(codModuloJava));
-
-        if (moduleID.compareTo(BigDecimal.ZERO) == 0) {
-            throw new MGEModelException(
-                "Parâmetro \"" + nomePreferencia + "\" não configurado com o módulo Java.");
-        }
-
-        RegraNegocioJava regra = (RegraNegocioJava)
-                CustomModuleLoader.getClass(ef, moduleID, classeAlvo).newInstance();
-        regra.executa(ctx);
-    }
-}
-```
-
----
-
-### External de Ação Agendada (Job)
-
-```java
-package br.com.sankhya.dstech.nomedemanda.acoesagendadas.external;
-
-import org.cuckoo.core.ScheduledAction;
-import org.cuckoo.core.ScheduledActionContext;
-import br.com.sankhya.jape.EntityFacade;
-import br.com.sankhya.modelcore.MGEModelException;
-import br.com.sankhya.modelcore.custommodule.CustomModuleLoader;
-import br.com.sankhya.modelcore.util.EntityFacadeFactory;
-import br.com.sankhya.modelcore.util.MGECoreParameter;
-import com.sankhya.util.BigDecimalUtil;
-import java.math.BigDecimal;
-
-/**
- * Classe registrada no agendador — delega para outro JAR via CustomModuleLoader.
- *
- * Configuração no Sankhya:
- *   Classe Java : br.com.sankhya.dstech.nomedemanda.acoesagendadas.external.NomeAgendadaExternal
- */
-public class NomeAgendadaExternal implements ScheduledAction {
-
-    @Override
-    public void onTime(ScheduledActionContext arg0) throws Exception {
-        String nomePreferencia = "AD_MOD_NOMEAGENDADA";
-        int codModuloJava = MGECoreParameter.getParameterAsInt(nomePreferencia);
-        String classeAlvo = "br.com.sankhya.dstech.nomedemanda.acoesagendadas.NomeAgendada";
-
-        EntityFacade ef = EntityFacadeFactory.getDWFFacade();
-        BigDecimal moduleID = BigDecimalUtil.getValueOrZero(BigDecimal.valueOf(codModuloJava));
-
-        if (moduleID.compareTo(BigDecimal.ZERO) == 0) {
-            throw new MGEModelException(
-                "Parâmetro \"" + nomePreferencia + "\" não configurado com o módulo Java.");
-        }
-
-        ScheduledAction agendada = (ScheduledAction)
-                CustomModuleLoader.getClass(ef, moduleID, classeAlvo).newInstance();
-        agendada.onTime(arg0);
-    }
-}
-```
-
----
-
-### Como funciona
-
-1. A classe External é registrada no Sankhya (evento, botão, regra ou agendador)
-2. Ao executar, lê a preferência configurada → obtém o ID do módulo Java
-3. `CustomModuleLoader.getClass(ef, moduleID, classe)` carrega a classe do outro JAR dinamicamente
-4. Chama o método da classe alvo via casting direto (regra, botão, agendada) ou reflection (evento)
-
-**Configuração da preferência:**
-```
-Menu: Preferências do Sistema
-  Nome  : AD_MOD_NOMEEVENTO   (ou AD_MOD_NOMEBOTAO, AD_MOD_NOMEREGRA, AD_MOD_NOMEAGENDADA)
-  Valor : {ID do módulo Java cadastrado no Sankhya}
-```

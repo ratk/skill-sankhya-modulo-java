@@ -81,7 +81,7 @@ Java/
 │   ├── utils/
 │   │   └── PopUpBuilder.java              ← OBRIGATÓRIO — copiar de examples/PopUpBuilder.java
 │   └── {modulo}/
-│       └── botaoacao/
+│       └── actionbutton/
 │           └── MeuBotaoAcao.java
 └── resources/
     └── {modulo}/
@@ -713,7 +713,8 @@ public class MeuBotaoAcao implements AcaoRotinaJava {
 
     @Override
     public void doAction(ContextoAcao ctx) throws Exception {
-        String dadosJson = MeuHelper.buscarDadosJson();
+        NomeService nomeService = new NomeService();
+		String dadosJson = nomeService.buscarDadosJson();
         String popup = new PopUpBuilder.Builder()
             .setTitle("T&iacute;tulo")
             .setHtmlFile(MeuBotaoAcao.class.getResourceAsStream(POPUP_HTML))
@@ -732,7 +733,7 @@ public class MeuBotaoAcao implements AcaoRotinaJava {
 ```java
 /* beforeUpdate de EventoProgramavelJava */
 public void beforeUpdate(PersistenceEvent event) throws Exception {
-    DynamicVO vo = event.getVO();
+    DynamicVO vo = (DynamicVO) event.getVo();
     String popup = new PopUpBuilder.Builder()
         .setTitle("Confirma&ccedil;&atilde;o")
         .setHtmlFile(MeuEvento.class.getResourceAsStream("/{modulo}/popup/PopUpConfirmar.html"))

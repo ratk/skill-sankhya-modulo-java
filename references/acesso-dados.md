@@ -348,10 +348,6 @@ try {
 
 > **ESCAPE '!'** nos arquivos .sql — trata o `_` como literal no LIKE:
 > `COLUMN_NAME LIKE 'AD!_%' ESCAPE '!'` casa com colunas que começam com `AD_`.
-```
-
-> **ESCAPE '!'** — trata o `_` como literal (não wildcard) no LIKE.
-> `'AD!_%' ESCAPE '!'` casa exatamente com colunas que começam com `AD_`.
 
 ---
 

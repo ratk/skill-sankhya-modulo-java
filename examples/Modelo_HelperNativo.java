@@ -75,36 +75,6 @@ public class Modelo_Helper {
         return DwfUtils.findEntitiesAsVO("AD_MINHAENTIDADE", "STATUS = ?", new Object[]{status});
     }
 
-    // -------------------------------------------------------------------------
-    // Exemplo de criação e atualização com JapeFactory
-    // -------------------------------------------------------------------------
-
-    public static BigDecimal criarRegistro(BigDecimal campo1, String campo2) throws Exception {
-        try {
-            DynamicVO novo = JapeFactory.dao("AD_MINHAENTIDADE").create()
-                    .set("CAMPO1", campo1)
-                    .set("CAMPO2", campo2)
-                    .set("STATUS", "P")
-                    .save();
-
-            return novo.asBigDecimal("ID_CAMPO");
-
-        } catch (Exception e) {
-            MGEModelException.throwMe(e);
-        }
-        return null;
-    }
-
-    public static void atualizarStatus(BigDecimal id, String novoStatus) throws Exception {
-        try {
-            JapeFactory.dao("AD_MINHAENTIDADE")
-                    .prepareToUpdateByPK(id)
-                    .set("STATUS", novoStatus)
-                    .update();
-        } catch (Exception e) {
-            MGEModelException.throwMe(e);
-        }
-    }
 
     // -------------------------------------------------------------------------
     // Exemplo com usuário logado
@@ -114,19 +84,4 @@ public class Modelo_Helper {
         return AuthenticationInfo.getCurrent().getUserID();
     }
 
-    // -------------------------------------------------------------------------
-    // Exemplo com DwfUtils.execWithTx — operação transacional fora de evento
-    // -------------------------------------------------------------------------
-
-    public static void processarLote(List<BigDecimal> ids) throws Exception {
-        DwfUtils.execWithTx(() -> {
-            for (BigDecimal id : ids) {
-                JapeFactory.dao("AD_MINHAENTIDADE")
-                        .prepareToUpdateByPK(id)
-                        .set("PROCESSADO", "S")
-                        .update();
-            }
-            return true;
-        });
-    }
 }

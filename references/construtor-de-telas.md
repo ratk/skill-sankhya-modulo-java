@@ -435,7 +435,7 @@ No XML, referenciar o JAR:
         <event type="RJ">
           <description><![CDATA[PREENCHER VALOR UNITÁRIO]]></description>
           <eventConfig>
-            <javaCall className="br.com.empresa.dctm.modulo.evento.PreencherVlrUnitEvento" />
+            <javaCall className="br.com.empresa.dctm.modulo.event.PreencherVlrUnitEvento" />
           </eventConfig>
           <moduleName><![CDATA[MEU MÓDULO]]></moduleName>
           <moduleResourceID><![CDATA[br.com.empresa.dctm.meuModulo]]></moduleResourceID>
@@ -547,52 +547,7 @@ Alguns entityNames diferem entre o XML do Construtor de Telas e o uso em `JapeFa
 > Sempre testar o entityName XML em ambiente de homologação antes de ir para produção.
 > Se o import falhar por entityName inválido, o Sankhya exibe erro explícito na tela de importação.
 
----
 
-## Convenção de Arquivos no Projeto (Blendcoffee)
-
-### Nomenclatura dos ZIPs
-
-```
-Metadados_AD_NOMETABELA.zip          ← nova tabela customizada
-Metadados_TABELANATIVA_descricao.zip ← update em tabela nativa (isUpdate="true")
-```
-
-### Estrutura de pastas
-
-```
-Telas Adicionais/
-  armazens e benefiamento/    ← tabelas do módulo central de armazéns
-  contratoarmazenagem/        ← views e tabelas de contratos de armazenagem
-  ordemcoleta/                ← EPIC-5 (AD_ORDEMCOLETA, AD_ORDEMCOLITE)
-  adiantamentocontrato/       ← EPIC-4 (AD_TARDDI, update TCSCON)
-  saldospedexportacao/        ← saldos de exportação
-  [nomeepic]/                 ← criar pasta por EPIC/módulo
-```
-
-### Geração do ZIP via ferramentas
-
-O XML deve usar `encoding="ISO-8859-1"` no header. Para conteúdo apenas ASCII
-(sem acentos no CDATA) o encoding do arquivo em disco não importa — UTF-8 e
-ISO-8859-1 produzem bytes idênticos para caracteres ASCII.
-
-**Fluxo recomendado:**
-
-1. Criar `metadata.xml` com a ferramenta Write no caminho `/tmp/`
-2. Zipar com bash e salvar direto na pasta do projeto:
-
-```bash
-# Criar o zip com o arquivo renomeado para metadata.xml dentro
-cp /tmp/metadata_minhaentidade.xml /tmp/metadata.xml
-zip -j "Telas Adicionais/nomemodulo/Metadados_AD_MINHAENTIDADE.zip" /tmp/metadata.xml
-rm /tmp/metadata.xml
-```
-
-3. Verificar conteúdo:
-```bash
-unzip -p "Telas Adicionais/nomemodulo/Metadados_AD_MINHAENTIDADE.zip" metadata.xml | head -10
-ls -lh "Telas Adicionais/nomemodulo/"
-```
 
 ### Adicionando campos a tabela nativa (`isUpdate="true"`)
 
