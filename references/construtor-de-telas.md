@@ -530,7 +530,7 @@ No XML, referenciar o JAR:
 | `Usuario` | `TSIUSU` | Usuários do sistema | ✅ |
 | `LiberacaoLimite` | `TSILIB` | Liberações por alçada (TSILIB) | ✅ |
 
-> ✅ = confirmado em produção no projeto Blendcoffee.
+> ✅ = confirmado em produção em projeto real.
 > Entidades sem confirmação podem variar entre versões/instâncias do Sankhya OM.
 
 ---
