@@ -343,6 +343,7 @@ Carregar o arquivo ao aprofundar um tópico:
 | `RegraNegocioJava`, `Regra`, `ScheduledAction`, `Job` | Ao criar regra no ciclo de notas ou job agendado | `references/regra-negocio.md` |
 | `JapeFactory`, `DwfUtils`, `EntityFacade`, `JdbcWrapper`, `JapeSession` | Ao lidar com persistência, queries nativas, sessão ou transação | `references/acesso-dados.md` |
 | `NativeSql` assertivo — `getResultSetAsCollection`, `getColumnsAsMap`, `MapUtils`, `IN` clause chunking | Ao escrever queries nativas no `repository/` quando JAPE não resolve | `references/nativesql-assertivo.md` |
+| SQL Multibanco — SQL portável Oracle ↔ SQL Server: tipos, funções proibidas, nomenclatura, idempotência de DML | Ao escrever dbscripts, views ou SQL nativo que precise rodar em ambos os bancos | `references/sql-multibanco.md` |
 | Component — orquestração, padrões por artefato, tratamento de exceções | Ao criar ou revisar a camada `component/` | `references/component.md` |
 | Controller — endpoint REST/serviço, registro manual, gestão de sessão | Ao criar ou revisar endpoint exposto via `ServiceProvider` | `references/controller.md` |
 | Service, Repository, Exception, DTO — responsabilidades e integração | Ao criar qualquer uma dessas camadas ou decidir onde colocar lógica | `references/service-repository.md` |
