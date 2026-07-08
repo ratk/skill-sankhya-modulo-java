@@ -118,6 +118,25 @@ public class CalcularTotalEvento implements EventoProgramavelJava {
 }
 ```
 
+Alternativa sem repository dedicado — somar os itens direto no evento com
+`DwfUtils.findEntitysAsVO` (útil quando o cálculo é simples e não se repete em outro ponto):
+
+```java
+Collection<DynamicVO> itens = DwfUtils.findEntitysAsVO(
+        "AD_NOMETABELAITE",
+        "this.IDPAI = ?",
+        new Object[]{idPai});
+
+if (itens == null || itens.isEmpty()) return;
+
+BigDecimal total = BigDecimal.ZERO;
+for (DynamicVO item : itens) {
+    BigDecimal vlr = item.asBigDecimal("VLRITEM");
+    if (vlr != null) total = total.add(vlr);
+}
+vo.setProperty("TOTAL", total);
+```
+
 ## Padrão: Copiar campo de entidade relacionada
 
 Preenche automaticamente um campo copiando de outra entidade ao inserir/alterar um item.
@@ -245,6 +264,37 @@ public class CriarItensPadraoEvento implements EventoProgramavelJava {
     @Override public void afterDelete(PersistenceEvent event) throws Exception {}
     @Override public void beforeCommit(TransactionContext tranCtx) throws Exception {}
 }
+```
+
+## Registro Manual no Sankhya
+
+Diferente do `@Listener` do Addon Studio, o evento precisa ser registrado manualmente na entidade.
+
+### Opção 1: Via XML de Metadados (recomendada — automática no import)
+
+```xml
+<events>
+  <event type="RJ">
+    <description><![CDATA[NOME DO EVENTO]]></description>
+    <eventConfig>
+      <javaCall className="br.com.empresa.dctm.modulo.evento.NomeEvento" />
+    </eventConfig>
+    <moduleName><![CDATA[NOME DO MÓDULO]]></moduleName>
+    <moduleResourceID><![CDATA[br.com.empresa.dctm.nomeModulo]]></moduleResourceID>
+  </event>
+</events>
+```
+
+### Opção 2: Via Menu do Sankhya
+
+```
+Menu: Arquivo → Gerenciador de módulos → Eventos Programáveis
+
+Campos obrigatórios:
+  Entidade    : nome da instância JAPE (ex: AD_NOMETABELA, CabecalhoNota)
+  Tipo        : beforeInsert | afterInsert | beforeUpdate | afterUpdate | beforeDelete | afterDelete
+  Classe Java : pacote completo (ex: br.com.empresa.dctm.modulo.evento.NomeEvento)
+  Módulo      : nome descritivo
 ```
 
 ## Boas Práticas
